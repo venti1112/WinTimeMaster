@@ -37,7 +37,10 @@ qt_add_executable(WinTimeMaster
 qt_add_translations(WinTimeMaster
     TS_FILES
         Translations/zh_CN.ts
+        Translations/zh_TW.ts
         Translations/en_US.ts
+        Translations/ko.ts
+        Translations/ja_JP.ts
     RESOURCE_PREFIX "/i18n"
 )
 

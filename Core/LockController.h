@@ -4,9 +4,11 @@
 #include <QObject>
 #include <QTimer>
 #include <QDateTime>
-#include <QQuickWindow>
+#include <QPair>
 #include <QQmlApplicationEngine>
-#include "TimeRuleModel.h"
+
+class TimeRuleModel;
+class QQuickWindow;
 
 class LockController : public QObject
 {
@@ -32,13 +34,17 @@ private slots:
     void checkLockRules();
 
 private:
-    void updateLockWindow();
+    // 系统限制相关
+    void applySystemRestrictions();
+    void removeSystemRestrictions();
+    void blockInput(bool block);
+    void disableTaskManager(bool disable);
 
     TimeRuleModel *m_model = nullptr;
     QQuickWindow *m_lockWindow = nullptr;
     QTimer *m_timer = nullptr;
     bool m_checking = false;
-    QQmlApplicationEngine *m_engine = nullptr;   // 用于创建锁屏窗口
+    QQmlApplicationEngine *m_engine = nullptr;
 };
 
 #endif // LOCKCONTROLLER_H

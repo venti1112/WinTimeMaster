@@ -1,208 +1,208 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="zh_CN">
+<TS version="2.1" language="ja_JP">
 <context>
     <name>Settings</name>
     <message>
         <source>Settings</source>
-        <translation>设置</translation>
+        <translation>設定</translation>
     </message>
     <message>
         <source>Language</source>
-        <translation>语言</translation>
+        <translation>言語</translation>
     </message>
     <message>
         <source>Rules</source>
-        <translation>规则</translation>
+        <translation>ルール</translation>
     </message>
     <message>
         <source>Once</source>
-        <translation>仅一次</translation>
+        <translation>1回のみ</translation>
     </message>
     <message>
         <source>Daily</source>
-        <translation>每天</translation>
+        <translation>毎日</translation>
     </message>
     <message>
         <source>Weekdays</source>
-        <translation>按星期</translation>
+        <translation>曜日指定</translation>
     </message>
     <message>
         <source>Mon</source>
-        <translation>星期一</translation>
+        <translation>月曜日</translation>
     </message>
     <message>
         <source>Tue</source>
-        <translation>星期二</translation>
+        <translation>火曜日</translation>
     </message>
     <message>
         <source>Wed</source>
-        <translation>星期三</translation>
+        <translation>水曜日</translation>
     </message>
     <message>
         <source>Thu</source>
-        <translation>星期四</translation>
+        <translation>木曜日</translation>
     </message>
     <message>
         <source>Fri</source>
-        <translation>星期五</translation>
+        <translation>金曜日</translation>
     </message>
     <message>
         <source>Sat</source>
-        <translation>星期六</translation>
+        <translation>土曜日</translation>
     </message>
     <message>
         <source>Sun</source>
-        <translation>星期日</translation>
+        <translation>日曜日</translation>
     </message>
     <message>
         <source>Enabled</source>
-        <translation>启用</translation>
+        <translation>有効</translation>
     </message>
     <message>
         <source>Disabled</source>
-        <translation>禁用</translation>
+        <translation>無効</translation>
     </message>
     <message>
         <source>Edit</source>
-        <translation>编辑</translation>
+        <translation>編集</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation>删除</translation>
+        <translation>削除</translation>
     </message>
     <message>
         <source>Add Rule</source>
-        <translation>添加规则</translation>
+        <translation>ルールを追加</translation>
     </message>
     <message>
         <source>Stop Service</source>
-        <translation>停止服务</translation>
+        <translation>サービス停止</translation>
     </message>
     <message>
         <source>Start Service</source>
-        <translation>启动服务</translation>
+        <translation>サービス開始</translation>
     </message>
     <message>
         <source>Service Running</source>
-        <translation>服务运行中</translation>
+        <translation>サービス実行中</translation>
     </message>
     <message>
         <source>Service Stopped</source>
-        <translation>服务未运行</translation>
+        <translation>サービス停止中</translation>
     </message>
     <message>
         <source>Auto Start</source>
-        <translation>开机自启</translation>
+        <translation>自動起動</translation>
     </message>
 </context>
 <context>
     <name>RuleEditor</name>
     <message>
         <source>Add Rule</source>
-        <translation>添加规则</translation>
+        <translation>ルールを追加</translation>
     </message>
     <message>
         <source>Edit Rule</source>
-        <translation>编辑规则</translation>
+        <translation>ルールを編集</translation>
     </message>
     <message>
         <source>Enabled</source>
-        <translation>启用</translation>
+        <translation>有効</translation>
     </message>
     <message>
         <source>Start Time</source>
-        <translation>开始时间</translation>
+        <translation>開始時刻</translation>
     </message>
     <message>
         <source>End Time</source>
-        <translation>结束时间</translation>
+        <translation>終了時刻</translation>
     </message>
     <message>
         <source>Repeat</source>
-        <translation>重复</translation>
+        <translation>繰り返し</translation>
     </message>
     <message>
         <source>Once</source>
-        <translation>仅一次</translation>
+        <translation>1回のみ</translation>
     </message>
     <message>
         <source>Daily</source>
-        <translation>每天</translation>
+        <translation>毎日</translation>
     </message>
     <message>
         <source>Weekdays</source>
-        <translation>按星期</translation>
+        <translation>曜日指定</translation>
     </message>
     <message>
         <source>Days of Week</source>
-        <translation>选择星期</translation>
+        <translation>曜日選択</translation>
     </message>
     <message>
         <source>Mon</source>
-        <translation>星期一</translation>
+        <translation>月曜日</translation>
     </message>
     <message>
         <source>Tue</source>
-        <translation>星期二</translation>
+        <translation>火曜日</translation>
     </message>
     <message>
         <source>Wed</source>
-        <translation>星期三</translation>
+        <translation>水曜日</translation>
     </message>
     <message>
         <source>Thu</source>
-        <translation>星期四</translation>
+        <translation>木曜日</translation>
     </message>
     <message>
         <source>Fri</source>
-        <translation>星期五</translation>
+        <translation>金曜日</translation>
     </message>
     <message>
         <source>Sat</source>
-        <translation>星期六</translation>
+        <translation>土曜日</translation>
     </message>
     <message>
         <source>Sun</source>
-        <translation>星期日</translation>
+        <translation>日曜日</translation>
     </message>
 </context>
 <context>
     <name>LockScreen</name>
     <message>
         <source>Device Locked</source>
-        <translation>设备已锁定</translation>
+        <translation>デバイスはロックされています</translation>
     </message>
     <message>
         <source>Current Time: </source>
-        <translation>当前时间：</translation>
+        <translation>現在時刻：</translation>
     </message>
     <message>
         <source>Unlock Time: </source>
-        <translation>解锁时间：</translation>
+        <translation>ロック解除時刻：</translation>
     </message>
     <message>
         <source>Remaining: </source>
-        <translation>剩余时间：</translation>
+        <translation>残り時間：</translation>
     </message>
 </context>
 <context>
     <name>TrayManager</name>
     <message>
         <source>Show Settings</source>
-        <translation>显示设置</translation>
+        <translation>設定を表示</translation>
     </message>
     <message>
         <source>Quit</source>
-        <translation>退出</translation>
+        <translation>終了</translation>
     </message>
     <message>
         <source>Stop Service</source>
-        <translation>停止服务</translation>
+        <translation>サービス停止</translation>
     </message>
     <message>
         <source>Start Service</source>
-        <translation>启动服务</translation>
+        <translation>サービス開始</translation>
     </message>
     <message>
         <source>WinTimeMaster</source>
@@ -210,11 +210,11 @@
     </message>
     <message>
         <source>Service Running</source>
-        <translation>服务运行中</translation>
+        <translation>サービス実行中</translation>
     </message>
     <message>
         <source>Service Stopped</source>
-        <translation>服务未运行</translation>
+        <translation>サービス停止中</translation>
     </message>
 </context>
 </TS>

@@ -25,7 +25,7 @@ Dialog {
     property bool tempRuleEnabled: ruleEnabled
 
     // ── 窗口设定 ──
-    title: ruleIndex === -1 ? qsTr("Add Lock Time") : qsTr("Edit Lock Time")
+    title: ruleIndex === -1 ? qsTr("Add Rule") : qsTr("Edit Rule")
     width: tempRepeatMode === 2 ? 540 : 360
     height: 320
 

@@ -4,14 +4,60 @@
 #include <QQuickStyle>
 #include <QIcon>
 #include <QFont>
+#include <QCommandLineParser>
+
 #include "Core/LanguageManager.h"
 #include "Core/SettingsController.h"
 #include "Core/TrayManager.h"
 #include "Core/LockController.h"
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#include <shellapi.h>
+#endif
+
+static bool isAdmin()
+{
+#ifdef Q_OS_WIN
+    HANDLE hToken = nullptr;
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
+        return false;
+    TOKEN_ELEVATION elevation;
+    DWORD size = sizeof(TOKEN_ELEVATION);
+    bool result = false;
+    if (GetTokenInformation(hToken, TokenElevation, &elevation, size, &size))
+        result = (elevation.TokenIsElevated != 0);
+    CloseHandle(hToken);
+    return result;
+#else
+    return true;
+#endif
+}
+
+static void restartAsAdmin()
+{
+#ifdef Q_OS_WIN
+    wchar_t exePath[MAX_PATH];
+    GetModuleFileNameW(NULL, exePath, MAX_PATH);
+    ShellExecuteW(NULL, L"runas", exePath, NULL, NULL, SW_SHOW);
+#endif
+}
+
 int main(int argc, char *argv[])
 {
+    if (!isAdmin()) {
+        restartAsAdmin();
+        return 0;
+    }
+
     QApplication app(argc, argv);
+
+    // 命令行解析
+    QCommandLineParser parser;
+    QCommandLineOption autostartOption("autostart", "Start minimized to tray.");
+    parser.addOption(autostartOption);
+    parser.process(app);
+    bool startMinimized = parser.isSet(autostartOption);
 
     QCoreApplication::setApplicationName("WinTimeMaster");
     QCoreApplication::setApplicationVersion(DISPLAY_VERSION);
@@ -23,35 +69,30 @@ int main(int argc, char *argv[])
 
     QQuickStyle::setStyle("FluentWinUI3");
 
-    // 全局字体
-    QFont globalFont("Microsoft YaHei", 10);
+    QFont globalFont("Microsoft YaHei UI", 10);
     globalFont.setStyleStrategy(QFont::PreferAntialias);
     app.setFont(globalFont);
 
     QQmlApplicationEngine engine;
 
-    // 语言管理器
     LanguageManager *languageManager = new LanguageManager(&engine, &engine);
     engine.rootContext()->setContextProperty("LanguageSwitcher", languageManager);
 
-    // 设置控制器（时间规则模型）
     SettingsController *settingsCtrl = new SettingsController(&engine);
     engine.rootContext()->setContextProperty("SettingsController", settingsCtrl);
 
-    // 锁屏控制器
     LockController *lockCtrl = new LockController(settingsCtrl->timeRuleModel(), &engine, &engine);
     engine.rootContext()->setContextProperty("LockController", lockCtrl);
 
-    // 托盘管理器
     TrayManager *trayManager = new TrayManager(&engine, &engine);
     engine.rootContext()->setContextProperty("TrayManager", trayManager);
-
-    // 注入锁屏控制器到托盘，以便添加启停菜单项
     trayManager->setLockController(lockCtrl);
 
-    // 语言切换时更新托盘菜单
     QObject::connect(languageManager, &LanguageManager::languageChanged,
                      trayManager, &TrayManager::updateMenuTexts);
+
+    // 将启动模式传给 QML
+    engine.rootContext()->setContextProperty("startMinimized", startMinimized);
 
     QObject::connect(
         &engine,

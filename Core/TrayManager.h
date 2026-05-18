@@ -25,6 +25,7 @@ public:
 
 public slots:
     void updateMenuTexts();
+    void updateTooltip();
 
 private:
     void setupTrayIcon();
@@ -36,6 +37,7 @@ private:
     QAction *m_showAction = nullptr;
     QAction *m_startStopAction = nullptr;
     QAction *m_quitAction = nullptr;
+    LockController *m_lockCtrl = nullptr;
 };
 
 #endif // TRAYMANAGER_H

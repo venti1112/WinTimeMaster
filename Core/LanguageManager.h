@@ -22,11 +22,13 @@ signals:
     void languageChanged();
 
 private:
-    void loadTranslation(const QString &languageCode);
+    bool loadTranslation(const QString &languageCode);
+    QString resolveLanguageCode(const QString &localeName) const;  // 智能映射
 
     QQmlApplicationEngine *m_engine = nullptr;
     QTranslator *m_translator = nullptr;
     QString m_currentLanguage;
+    void detectAndLoadLanguage();
 };
 
 #endif // LANGUAGEMANAGER_H

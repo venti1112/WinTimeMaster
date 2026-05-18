@@ -1,23 +1,23 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="zh_CN">
+<TS version="2.1" language="zh_TW">
 <context>
     <name>Settings</name>
     <message>
         <source>Settings</source>
-        <translation>设置</translation>
+        <translation>設定</translation>
     </message>
     <message>
         <source>Language</source>
-        <translation>语言</translation>
+        <translation>語言</translation>
     </message>
     <message>
         <source>Rules</source>
-        <translation>规则</translation>
+        <translation>規則</translation>
     </message>
     <message>
         <source>Once</source>
-        <translation>仅一次</translation>
+        <translation>僅一次</translation>
     </message>
     <message>
         <source>Daily</source>
@@ -25,7 +25,7 @@
     </message>
     <message>
         <source>Weekdays</source>
-        <translation>按星期</translation>
+        <translation>依星期</translation>
     </message>
     <message>
         <source>Mon</source>
@@ -57,74 +57,74 @@
     </message>
     <message>
         <source>Enabled</source>
-        <translation>启用</translation>
+        <translation>啟用</translation>
     </message>
     <message>
         <source>Disabled</source>
-        <translation>禁用</translation>
+        <translation>停用</translation>
     </message>
     <message>
         <source>Edit</source>
-        <translation>编辑</translation>
+        <translation>編輯</translation>
     </message>
     <message>
         <source>Delete</source>
-        <translation>删除</translation>
+        <translation>刪除</translation>
     </message>
     <message>
         <source>Add Rule</source>
-        <translation>添加规则</translation>
+        <translation>新增規則</translation>
     </message>
     <message>
         <source>Stop Service</source>
-        <translation>停止服务</translation>
+        <translation>停止服務</translation>
     </message>
     <message>
         <source>Start Service</source>
-        <translation>启动服务</translation>
+        <translation>啟動服務</translation>
     </message>
     <message>
         <source>Service Running</source>
-        <translation>服务运行中</translation>
+        <translation>服務執行中</translation>
     </message>
     <message>
         <source>Service Stopped</source>
-        <translation>服务未运行</translation>
+        <translation>服務已停止</translation>
     </message>
     <message>
         <source>Auto Start</source>
-        <translation>开机自启</translation>
+        <translation>開機自動啟動</translation>
     </message>
 </context>
 <context>
     <name>RuleEditor</name>
     <message>
         <source>Add Rule</source>
-        <translation>添加规则</translation>
+        <translation>新增規則</translation>
     </message>
     <message>
         <source>Edit Rule</source>
-        <translation>编辑规则</translation>
+        <translation>編輯規則</translation>
     </message>
     <message>
         <source>Enabled</source>
-        <translation>启用</translation>
+        <translation>啟用</translation>
     </message>
     <message>
         <source>Start Time</source>
-        <translation>开始时间</translation>
+        <translation>開始時間</translation>
     </message>
     <message>
         <source>End Time</source>
-        <translation>结束时间</translation>
+        <translation>結束時間</translation>
     </message>
     <message>
         <source>Repeat</source>
-        <translation>重复</translation>
+        <translation>重複</translation>
     </message>
     <message>
         <source>Once</source>
-        <translation>仅一次</translation>
+        <translation>僅一次</translation>
     </message>
     <message>
         <source>Daily</source>
@@ -132,11 +132,11 @@
     </message>
     <message>
         <source>Weekdays</source>
-        <translation>按星期</translation>
+        <translation>依星期</translation>
     </message>
     <message>
         <source>Days of Week</source>
-        <translation>选择星期</translation>
+        <translation>選擇星期</translation>
     </message>
     <message>
         <source>Mon</source>
@@ -171,38 +171,38 @@
     <name>LockScreen</name>
     <message>
         <source>Device Locked</source>
-        <translation>设备已锁定</translation>
+        <translation>裝置已鎖定</translation>
     </message>
     <message>
         <source>Current Time: </source>
-        <translation>当前时间：</translation>
+        <translation>目前時間：</translation>
     </message>
     <message>
         <source>Unlock Time: </source>
-        <translation>解锁时间：</translation>
+        <translation>解鎖時間：</translation>
     </message>
     <message>
         <source>Remaining: </source>
-        <translation>剩余时间：</translation>
+        <translation>剩餘時間：</translation>
     </message>
 </context>
 <context>
     <name>TrayManager</name>
     <message>
         <source>Show Settings</source>
-        <translation>显示设置</translation>
+        <translation>顯示設定</translation>
     </message>
     <message>
         <source>Quit</source>
-        <translation>退出</translation>
+        <translation>結束</translation>
     </message>
     <message>
         <source>Stop Service</source>
-        <translation>停止服务</translation>
+        <translation>停止服務</translation>
     </message>
     <message>
         <source>Start Service</source>
-        <translation>启动服务</translation>
+        <translation>啟動服務</translation>
     </message>
     <message>
         <source>WinTimeMaster</source>
@@ -210,11 +210,11 @@
     </message>
     <message>
         <source>Service Running</source>
-        <translation>服务运行中</translation>
+        <translation>服務執行中</translation>
     </message>
     <message>
         <source>Service Stopped</source>
-        <translation>服务未运行</translation>
+        <translation>服務已停止</translation>
     </message>
 </context>
 </TS>

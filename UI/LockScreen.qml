@@ -4,21 +4,19 @@ import QtQuick.Layouts
 
 Window {
     id: lockScreenWindow
-    flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Window
-    visibility: Window.Hidden
+    // 关键标志：无边框、置顶、工具窗口（不出现任务栏，跨虚拟桌面）
+    flags: Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool
+    visible: false                           // 由 C++ 控制显示
     color: "black"
 
-    // 由 C++ 动态更新的属性
     property string currentTime: ""
     property string unlockTime: ""
     property string remainingTime: ""
 
-    // 禁止关闭
     onClosing: function(close) {
-        close.accepted = false;
+        close.accepted = false;              // 禁止关闭
     }
 
-    // 中间内容
     Item {
         anchors.centerIn: parent
         width: parent.width * 0.7

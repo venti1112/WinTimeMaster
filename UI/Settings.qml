@@ -4,7 +4,7 @@ import QtQuick.Layouts
 
 ApplicationWindow {
     id: settingsWindow
-    visible: true
+    visible: !startMinimized
     width: 800
     height: 480
     title: qsTr("Settings")
@@ -25,7 +25,7 @@ ApplicationWindow {
 
         // ── 锁机规则标题 ──
         Label {
-            text: qsTr("Lock Time Rules")
+            text: qsTr("Rules")
             font.pixelSize: 16
             font.bold: true
         }
@@ -60,9 +60,23 @@ ApplicationWindow {
                         text: {
                             let start = model.startTime.toLocaleTimeString(Qt.locale(), "HH:mm");
                             let end = model.endTime.toLocaleTimeString(Qt.locale(), "HH:mm");
-                            let mode = ["Once","Daily","Weekdays"][model.repeatMode];
+                            let modeStr;
+                            if (model.repeatMode === 2) {   // WeekDays
+                                let dayNames = [
+                                    qsTr("Mon"), qsTr("Tue"), qsTr("Wed"),
+                                    qsTr("Thu"), qsTr("Fri"), qsTr("Sat"), qsTr("Sun")
+                                ];
+                                let selected = [];
+                                for (let i = 0; i < 7; ++i) {
+                                    if (model.weekDays & (1 << i))
+                                        selected.push(dayNames[i]);
+                                }
+                                modeStr = selected.join(", ");
+                            } else {
+                                modeStr = [qsTr("Once"), qsTr("Daily")][model.repeatMode];
+                            }
                             let status = model.enabled ? qsTr("Enabled") : qsTr("Disabled");
-                            return "%1 - %2  %3  [%4]".arg(start).arg(end).arg(mode).arg(status);
+                            return "%1 - %2  %3  [%4]".arg(start).arg(end).arg(modeStr).arg(status);
                         }
                         onClicked: {
                             ruleEditorDialog.ruleIndex = index;
@@ -111,13 +125,13 @@ ApplicationWindow {
             }
         }
 
-        // ── 底部操作栏：左按钮，右语言设置 ──
+        // ── 底部操作栏 ──
         RowLayout {
             Layout.fillWidth: true
             spacing: 16
 
             Button {
-                text: qsTr("Add Lock Time")
+                text: qsTr("Add Rule")
                 onClicked: {
                     ruleEditorDialog.ruleIndex = -1;
                     ruleEditorDialog.ruleId = -1;
@@ -130,10 +144,33 @@ ApplicationWindow {
                 }
             }
             Button {
-                text: LockController.checking ? qsTr("Stop Checking") : qsTr("Start Checking")
+                text: LockController.checking ? qsTr("Stop Service") : qsTr("Start Service")
                 onClicked: {
                     LockController.toggleChecking();
                 }
+            }
+            // 状态指示灯（红/绿圆点）
+            Rectangle {
+                width: 14
+                height: 14
+                radius: 7
+                color: LockController.checking ? "#4CAF50" : "#F44336"
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            // 状态文字
+            Label {
+                text: LockController.checking ? qsTr("Service Running") : qsTr("Service Stopped")
+                Layout.alignment: Qt.AlignVCenter
+                font.pixelSize: 13
+            }
+
+            CheckBox {
+                id: autostartCheck
+                text: qsTr("Auto Start")
+                checked: SettingsController.autostartEnabled
+                onToggled: SettingsController.setAutostartEnabled(checked)
+                Layout.alignment: Qt.AlignVCenter
             }
 
             // 占位，把语言设置推到右侧
@@ -149,15 +186,32 @@ ApplicationWindow {
                 ComboBox {
                     id: languageCombo
                     Layout.preferredWidth: 130
-                    model: [qsTr("English"), qsTr("Chinese")]
 
+                    // 语言模型：显示文本需在翻译文件中定义
+                    ListModel {
+                        id: languageModel
+                        ListElement { text: qsTr("English"); code: "en_US" }
+                        ListElement { text: qsTr("简体中文"); code: "zh_CN" }
+                        ListElement { text: qsTr("繁體中文"); code: "zh_TW" }
+                        ListElement { text: qsTr("한국어"); code: "ko" }
+                        ListElement { text: qsTr("日本語"); code: "ja_JP" }
+                    }
+                    model: languageModel
+                    textRole: "text"
+
+                    // 根据当前语言代码设置初始索引
                     Component.onCompleted: function() {
-                        currentIndex = currentLang.startsWith("zh") ? 1 : 0;
+                        for (let i = 0; i < languageModel.count; ++i) {
+                            if (languageModel.get(i).code === currentLang) {
+                                currentIndex = i;
+                                break;
+                            }
+                        }
                     }
 
                     onActivated: function(index) {
-                        let newLang = index === 0 ? "en_US" : "zh_CN";
-                        LanguageSwitcher.switchLanguage(newLang);
+                        let langCode = languageModel.get(index).code;
+                        LanguageSwitcher.switchLanguage(langCode);
                     }
                 }
             }
