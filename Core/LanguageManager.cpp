@@ -1,8 +1,8 @@
 ﻿#include "LanguageManager.h"
+#include "ConfigManager.h"
 
 #include <QCoreApplication>
 #include <QLocale>
-#include <QSettings>
 #include <QMap>
 #include <QDebug>
 
@@ -11,8 +11,7 @@ LanguageManager::LanguageManager(QQmlApplicationEngine *engine, QObject *parent)
 {
     m_translator = new QTranslator(this);
 
-    QSettings settings;
-    QString savedLang = settings.value("Language").toString();
+    QString savedLang = ConfigManager::instance()->readString("Language");
 
     bool loaded = false;
     if (!savedLang.isEmpty()) {
@@ -40,8 +39,7 @@ void LanguageManager::switchLanguage(const QString &languageCode)
     if (m_currentLanguage == languageCode)
         return;
 
-    QSettings settings;
-    settings.setValue("Language", languageCode);
+    ConfigManager::instance()->writeString("Language", languageCode);
 
     loadTranslation(languageCode);
     emit languageChanged();
@@ -146,8 +144,7 @@ void LanguageManager::detectAndLoadLanguage()
 }
 void LanguageManager::reloadLanguage()
 {
-    QSettings settings;
-    QString lang = settings.value("Language").toString();
+    QString lang = ConfigManager::instance()->readString("Language");
     if (lang.isEmpty()) {
         lang = QLocale::system().name();
         // 可选映射

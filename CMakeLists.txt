@@ -25,6 +25,7 @@ find_package(Qt6 REQUIRED COMPONENTS
     QuickControls2
     Widgets
     Multimedia
+    Network
     LinguistTools
 )
 
@@ -51,6 +52,8 @@ qt_add_qml_module(WinTimeMaster
         UI/Settings.qml
         UI/RuleEditor.qml
         UI/LockScreen.qml
+        UI/PasswordDialog.qml
+        UI/AdvancedSettings.qml
     SOURCES
         Core/LanguageManager.h
         Core/LanguageManager.cpp
@@ -62,11 +65,14 @@ qt_add_qml_module(WinTimeMaster
         Core/TimeRuleModel.cpp
         Core/TrayManager.h
         Core/TrayManager.cpp
+        Core/ConfigManager.h
+        Core/ConfigManager.cpp
+        Core/TimeSyncManager.h
+        Core/TimeSyncManager.cpp
+        Core/LockController.h
+        Core/LockController.cpp
     RESOURCES
         Resources.qrc
-        SOURCES Core/LockController.h Core/LockController.cpp
-        QML_FILES UI/PasswordDialog.qml
-        QML_FILES UI/AdvancedSettings.qml
 )
 
 set_target_properties(WinTimeMaster PROPERTIES
@@ -85,6 +91,7 @@ target_link_libraries(WinTimeMaster
         Qt6::QuickControls2
         Qt6::Widgets
         Qt6::Multimedia
+        Qt6::Network
 )
 
 install(TARGETS WinTimeMaster

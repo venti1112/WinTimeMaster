@@ -39,13 +39,11 @@ private:
     void removeSystemRestrictions();
     void blockInput(bool block);
     void disableTaskManager(bool disable);
-    void syncSystemTime();
 
     TimeRuleModel *m_model = nullptr;
     QQuickWindow *m_lockWindow = nullptr;
     QTimer *m_timer = nullptr;
     bool m_checking = false;
-    bool m_wasLocked = false;
     QQmlApplicationEngine *m_engine = nullptr;
 };
 

@@ -8,11 +8,14 @@
 #include <QLocalSocket>
 #include <QSharedMemory>
 #include <QSurfaceFormat>
+#include <QStandardPaths>
 
+#include "Core/ConfigManager.h"
 #include "Core/LanguageManager.h"
 #include "Core/SettingsController.h"
 #include "Core/TrayManager.h"
 #include "Core/LockController.h"
+#include "Core/TimeSyncManager.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -93,11 +96,20 @@ int main(int argc, char *argv[])
 
     QQmlApplicationEngine engine;
 
+    QString configPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/config.json";
+    ConfigManager::initialize(configPath);
+
     LanguageManager *languageManager = new LanguageManager(&engine, &engine);
     engine.rootContext()->setContextProperty("LanguageSwitcher", languageManager);
 
     SettingsController *settingsCtrl = new SettingsController(&engine);
     engine.rootContext()->setContextProperty("SettingsController", settingsCtrl);
+
+    TimeSyncManager *timeSyncMgr = new TimeSyncManager(&engine);
+    engine.rootContext()->setContextProperty("TimeSyncManager", timeSyncMgr);
+
+    QObject::connect(settingsCtrl, &SettingsController::settingsImported,
+                     timeSyncMgr, &TimeSyncManager::reloadFromConfig);
 
     LockController *lockCtrl = new LockController(settingsCtrl->timeRuleModel(), &engine, &engine);
     engine.rootContext()->setContextProperty("LockController", lockCtrl);

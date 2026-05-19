@@ -1,12 +1,12 @@
 ﻿#include "LockController.h"
 #include "TimeRuleModel.h"
 #include "TimeRule.h"
+#include "ConfigManager.h"
 #include <QQmlComponent>
 #include <QQuickWindow>
 #include <QScreen>
 #include <QGuiApplication>
 #include <QProcess>
-#include <QSettings>
 #include <QDebug>
 
 #ifdef Q_OS_WIN
@@ -40,8 +40,7 @@ LockController::LockController(TimeRuleModel *model, QQmlApplicationEngine *engi
     connect(m_timer, &QTimer::timeout, this, &LockController::checkLockRules);
 
     // 恢复上次服务状态
-    QSettings settings;
-    bool lastRunning = settings.value("ServiceRunning", false).toBool();
+    bool lastRunning = ConfigManager::instance()->readBool("ServiceRunning", false);
     if (lastRunning) {
         startChecking();
     }
@@ -73,29 +72,28 @@ void LockController::disableTaskManager(bool disable)
 
 void LockController::applySystemRestrictions()
 {
-    QSettings settings;
-    if (settings.value("EnableInputBlock", true).toBool())
+    ConfigManager *cfg = ConfigManager::instance();
+    if (cfg->readBool("EnableInputBlock", true))
         blockInput(true);
-    if (settings.value("DisableTaskManager", true).toBool())
+    if (cfg->readBool("DisableTaskManager", true))
         disableTaskManager(true);
-    if (settings.value("KillTaskmgr", true).toBool())
+    if (cfg->readBool("KillTaskmgr", true))
         QProcess::execute("taskkill", QStringList() << "/f" << "/im" << "taskmgr.exe");
 }
 
 void LockController::removeSystemRestrictions()
 {
-    QSettings settings;
-    if (settings.value("EnableInputBlock", true).toBool())
+    ConfigManager *cfg = ConfigManager::instance();
+    if (cfg->readBool("EnableInputBlock", true))
         blockInput(false);
-    if (settings.value("DisableTaskManager", true).toBool())
+    if (cfg->readBool("DisableTaskManager", true))
         disableTaskManager(false);
 }
 
 // ---------- 状态持久化 ----------
 void LockController::saveServiceState()
 {
-    QSettings settings;
-    settings.setValue("ServiceRunning", m_checking);
+    ConfigManager::instance()->writeBool("ServiceRunning", m_checking);
 }
 
 bool LockController::isChecking() const
@@ -222,16 +220,29 @@ void LockController::checkLockRules()
         m_lockWindow->setProperty("remainingTime", remainingStr);
 
         // 同步背景图片
-        QSettings settings;
-        QString bgImage = settings.value("LockBackground", "").toString();
+        ConfigManager *cfgInst = ConfigManager::instance();
+        QString bgImage = cfgInst->readString("LockBackground", "");
         m_lockWindow->setProperty("backgroundImage", bgImage);
 
-        if (isLocked && !m_wasLocked) {
-            QSettings settings;
-            if (settings.value("AutoTimeSync", false).toBool())
-                syncSystemTime();
-        }
-        m_wasLocked = isLocked;
+        // 同步文字颜色 / 位置 / 提示词 / 隐藏开关
+        m_lockWindow->setProperty("promptColor",
+                                  cfgInst->readString("LockPromptColor", "#ffffffff"));
+        m_lockWindow->setProperty("currentTimeColor",
+                                  cfgInst->readString("LockCurrentTimeColor", "#ffd3d3d3"));
+        m_lockWindow->setProperty("unlockTimeColor",
+                                  cfgInst->readString("LockUnlockTimeColor", "#ffd3d3d3"));
+        m_lockWindow->setProperty("remainingTimeColor",
+                                  cfgInst->readString("LockRemainingTimeColor", "#ffff6347"));
+        m_lockWindow->setProperty("textPosition",
+                                  cfgInst->readString("LockTextPosition", "center"));
+        m_lockWindow->setProperty("promptText",
+                                  cfgInst->readString("LockPromptText", QString()));
+        m_lockWindow->setProperty("hideCurrentTime",
+                                  cfgInst->readBool("HideCurrentTime", false));
+        m_lockWindow->setProperty("hideUnlockTime",
+                                  cfgInst->readBool("HideUnlockTime", false));
+        m_lockWindow->setProperty("hideRemainingTime",
+                                  cfgInst->readBool("HideRemainingTime", false));
 
         applySystemRestrictions();
 
@@ -251,13 +262,4 @@ void LockController::checkLockRules()
             m_lockWindow->hide();
         }
     }
-}
-void LockController::syncSystemTime()
-{
-#ifdef Q_OS_WIN
-    // 使用 Windows 时间服务强制同步
-    QProcess::startDetached("w32tm", QStringList() << "/resync");
-#else
-    // 非 Windows 暂不实现
-#endif
 }

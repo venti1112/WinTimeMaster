@@ -12,8 +12,16 @@ class SettingsController : public QObject
     Q_PROPERTY(bool disableTaskManager READ isDisableTaskManager WRITE setDisableTaskManager NOTIFY disableTaskManagerChanged)
     Q_PROPERTY(bool enableInputBlock READ isEnableInputBlock WRITE setEnableInputBlock NOTIFY enableInputBlockChanged)
     Q_PROPERTY(bool killTaskmgr READ isKillTaskmgr WRITE setKillTaskmgr NOTIFY killTaskmgrChanged)
-    Q_PROPERTY(bool autoTimeSync READ isAutoTimeSync WRITE setAutoTimeSync NOTIFY autoTimeSyncChanged)
     Q_PROPERTY(QString lockScreenBackground READ lockScreenBackground WRITE setLockScreenBackground NOTIFY lockScreenBackgroundChanged)
+    Q_PROPERTY(QString lockPromptColor READ lockPromptColor WRITE setLockPromptColor NOTIFY lockPromptColorChanged)
+    Q_PROPERTY(QString lockCurrentTimeColor READ lockCurrentTimeColor WRITE setLockCurrentTimeColor NOTIFY lockCurrentTimeColorChanged)
+    Q_PROPERTY(QString lockUnlockTimeColor READ lockUnlockTimeColor WRITE setLockUnlockTimeColor NOTIFY lockUnlockTimeColorChanged)
+    Q_PROPERTY(QString lockRemainingTimeColor READ lockRemainingTimeColor WRITE setLockRemainingTimeColor NOTIFY lockRemainingTimeColorChanged)
+    Q_PROPERTY(QString lockScreenTextPosition READ lockScreenTextPosition WRITE setLockScreenTextPosition NOTIFY lockScreenTextPositionChanged)
+    Q_PROPERTY(QString lockScreenPromptText READ lockScreenPromptText WRITE setLockScreenPromptText NOTIFY lockScreenPromptTextChanged)
+    Q_PROPERTY(bool hideCurrentTime READ hideCurrentTime WRITE setHideCurrentTime NOTIFY hideCurrentTimeChanged)
+    Q_PROPERTY(bool hideUnlockTime READ hideUnlockTime WRITE setHideUnlockTime NOTIFY hideUnlockTimeChanged)
+    Q_PROPERTY(bool hideRemainingTime READ hideRemainingTime WRITE setHideRemainingTime NOTIFY hideRemainingTimeChanged)
 
 public:
     explicit SettingsController(QObject *parent = nullptr);
@@ -30,21 +38,50 @@ public:
     Q_INVOKABLE void setEnableInputBlock(bool enable);
     bool isKillTaskmgr() const;
     Q_INVOKABLE void setKillTaskmgr(bool kill);
-    bool isAutoTimeSync() const;
-    Q_INVOKABLE void setAutoTimeSync(bool enabled);
     QString lockScreenBackground() const;
     Q_INVOKABLE void setLockScreenBackground(const QString &background);
 
+    QString lockPromptColor() const;
+    Q_INVOKABLE void setLockPromptColor(const QString &color);
+    QString lockCurrentTimeColor() const;
+    Q_INVOKABLE void setLockCurrentTimeColor(const QString &color);
+    QString lockUnlockTimeColor() const;
+    Q_INVOKABLE void setLockUnlockTimeColor(const QString &color);
+    QString lockRemainingTimeColor() const;
+    Q_INVOKABLE void setLockRemainingTimeColor(const QString &color);
+
+    QString lockScreenTextPosition() const;
+    Q_INVOKABLE void setLockScreenTextPosition(const QString &position);
+
+    QString lockScreenPromptText() const;
+    Q_INVOKABLE void setLockScreenPromptText(const QString &text);
+
+    bool hideCurrentTime() const;
+    Q_INVOKABLE void setHideCurrentTime(bool hide);
+    bool hideUnlockTime() const;
+    Q_INVOKABLE void setHideUnlockTime(bool hide);
+    bool hideRemainingTime() const;
+    Q_INVOKABLE void setHideRemainingTime(bool hide);
+
     Q_INVOKABLE QString exportSettings(const QString &filePath);
     Q_INVOKABLE QString importSettings(const QString &filePath);
+    Q_INVOKABLE void showMessage(const QString &title, const QString &text);
 
 signals:
     void autostartEnabledChanged(bool enabled);
     void disableTaskManagerChanged(bool disable);
     void enableInputBlockChanged(bool enable);
     void killTaskmgrChanged(bool kill);
-    void autoTimeSyncChanged(bool enabled);
     void lockScreenBackgroundChanged(const QString &background);
+    void lockPromptColorChanged(const QString &color);
+    void lockCurrentTimeColorChanged(const QString &color);
+    void lockUnlockTimeColorChanged(const QString &color);
+    void lockRemainingTimeColorChanged(const QString &color);
+    void lockScreenTextPositionChanged(const QString &position);
+    void lockScreenPromptTextChanged(const QString &text);
+    void hideCurrentTimeChanged(bool hide);
+    void hideUnlockTimeChanged(bool hide);
+    void hideRemainingTimeChanged(bool hide);
     void settingsImported();
 
 private:

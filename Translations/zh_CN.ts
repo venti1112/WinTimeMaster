@@ -240,6 +240,30 @@
         <translation>自动校时</translation>
     </message>
     <message>
+        <source>Time Server</source>
+        <translation>时间服务器</translation>
+    </message>
+    <message>
+        <source>e.g. time.windows.com</source>
+        <translation>例如：time.windows.com</translation>
+    </message>
+    <message>
+        <source>Sync Now</source>
+        <translation>立即校时</translation>
+    </message>
+    <message>
+        <source>Sync Interval (minutes)</source>
+        <translation>校时间隔（分钟）</translation>
+    </message>
+    <message>
+        <source>Last sync: %1 - %2</source>
+        <translation>上次校时：%1 - %2</translation>
+    </message>
+    <message>
+        <source>Last sync: never</source>
+        <translation>上次校时：从未</translation>
+    </message>
+    <message>
         <source>Lock Screen Background</source>
         <translation>锁屏背景</translation>
     </message>
@@ -327,6 +351,94 @@
         <source>Settings imported successfully.</source>
         <translation>设置导入成功。</translation>
     </message>
+    <message>
+        <source>Lock Screen Text</source>
+        <translation>锁屏文字</translation>
+    </message>
+    <message>
+        <source>Custom Prompt</source>
+        <translation>自定义提示词</translation>
+    </message>
+    <message>
+        <source>Default: Device Locked</source>
+        <translation>默认：设备已锁定</translation>
+    </message>
+    <message>
+        <source>Text Color</source>
+        <translation>文字颜色</translation>
+    </message>
+    <message>
+        <source>Prompt</source>
+        <translation>提示词</translation>
+    </message>
+    <message>
+        <source>Current Time</source>
+        <translation>当前时间</translation>
+    </message>
+    <message>
+        <source>Unlock Time</source>
+        <translation>解锁时间</translation>
+    </message>
+    <message>
+        <source>Remaining Time</source>
+        <translation>剩余时间</translation>
+    </message>
+    <message>
+        <source>Select Text Color</source>
+        <translation>选择文字颜色</translation>
+    </message>
+    <message>
+        <source>Text Position</source>
+        <translation>文字位置</translation>
+    </message>
+    <message>
+        <source>Top Left</source>
+        <translation>左上角</translation>
+    </message>
+    <message>
+        <source>Top Center</source>
+        <translation>顶部中间</translation>
+    </message>
+    <message>
+        <source>Top Right</source>
+        <translation>右上角</translation>
+    </message>
+    <message>
+        <source>Middle Left</source>
+        <translation>左边中间</translation>
+    </message>
+    <message>
+        <source>Center</source>
+        <translation>正中间</translation>
+    </message>
+    <message>
+        <source>Middle Right</source>
+        <translation>右边中间</translation>
+    </message>
+    <message>
+        <source>Bottom Left</source>
+        <translation>左下角</translation>
+    </message>
+    <message>
+        <source>Bottom Center</source>
+        <translation>底部中间</translation>
+    </message>
+    <message>
+        <source>Bottom Right</source>
+        <translation>右下角</translation>
+    </message>
+    <message>
+        <source>Hide Current Time</source>
+        <translation>隐藏当前时间</translation>
+    </message>
+    <message>
+        <source>Hide Unlock Time</source>
+        <translation>隐藏解锁时间</translation>
+    </message>
+    <message>
+        <source>Hide Remaining Time</source>
+        <translation>隐藏剩余时间</translation>
+    </message>
 </context>
 <context>
     <name>SettingsController</name>
@@ -345,6 +457,49 @@
     <message>
         <source>Invalid settings file</source>
         <translation>无效的设置文件</translation>
+    </message>
+</context>
+<context>
+    <name>TimeSyncManager</name>
+    <message>
+        <source>Time synchronized successfully</source>
+        <translation>校时成功</translation>
+    </message>
+    <message>
+        <source>Server address is empty</source>
+        <translation>服务器地址为空</translation>
+    </message>
+    <message>
+        <source>Failed to resolve server: %1</source>
+        <translation>解析服务器失败：%1</translation>
+    </message>
+    <message>
+        <source>Failed to send NTP request: %1</source>
+        <translation>发送 NTP 请求失败：%1</translation>
+    </message>
+    <message>
+        <source>NTP request timed out</source>
+        <translation>NTP 请求超时</translation>
+    </message>
+    <message>
+        <source>Invalid NTP response</source>
+        <translation>NTP 响应无效</translation>
+    </message>
+    <message>
+        <source>NTP server returned invalid timestamp</source>
+        <translation>NTP 服务器返回了无效的时间戳</translation>
+    </message>
+    <message>
+        <source>Invalid timestamp from NTP server</source>
+        <translation>NTP 服务器返回的时间戳无效</translation>
+    </message>
+    <message>
+        <source>Failed to set system time (error %1). Administrator privileges required.</source>
+        <translation>设置系统时间失败（错误 %1），需要管理员权限。</translation>
+    </message>
+    <message>
+        <source>Time sync not implemented on this platform</source>
+        <translation>当前平台暂不支持校时</translation>
     </message>
 </context>
 </TS>

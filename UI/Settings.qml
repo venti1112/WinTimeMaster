@@ -5,8 +5,12 @@ import QtQuick.Layouts
 ApplicationWindow {
     id: settingsWindow
     visible: false
-    width: 800
-    height: 480
+    width: 900
+    height: 520
+    minimumWidth: 900
+    maximumWidth: 900
+    minimumHeight: 520
+    maximumHeight: 520
     title: qsTr("Settings")
 
     property string currentLang: LanguageSwitcher.currentLanguage

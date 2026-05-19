@@ -1,7 +1,6 @@
 ﻿#include "TimeRuleModel.h"
-#include <QJsonDocument>
+#include "ConfigManager.h"
 #include <QJsonObject>
-#include <QSettings>
 #include <QDebug>
 
 TimeRuleModel::TimeRuleModel(QObject *parent)
@@ -139,14 +138,9 @@ QList<TimeRule*> TimeRuleModel::rules() const
 // ------------------ 持久化 ------------------
 void TimeRuleModel::loadRules()
 {
-    QSettings settings;
-    const QByteArray data = settings.value("TimeRules").toByteArray();
-    if (data.isEmpty()) return;
+    const QJsonArray arr = ConfigManager::instance()->readJsonArray("TimeRules");
+    if (arr.isEmpty()) return;
 
-    QJsonDocument doc = QJsonDocument::fromJson(data);
-    if (!doc.isArray()) return;
-
-    const QJsonArray arr = doc.array();
     for (const QJsonValue &val : arr) {
         QJsonObject obj = val.toObject();
         auto *rule = new TimeRule(obj["id"].toInt(), this);
@@ -186,8 +180,7 @@ void TimeRuleModel::saveRules()
         arr.append(obj);
     }
 
-    QSettings settings;
-    settings.setValue("TimeRules", QJsonDocument(arr).toJson(QJsonDocument::Compact));
+    ConfigManager::instance()->writeJsonArray("TimeRules", arr);
     qDebug() << "Saved" << arr.size() << "time rules.";
 }
 
@@ -201,5 +194,5 @@ void TimeRuleModel::reload()
     qDeleteAll(m_rules);
     m_rules.clear();
     endResetModel();
-    loadRules();   // 从 QSettings 重新加载规则
+    loadRules();   // 从 ConfigManager 重新加载规则
 }

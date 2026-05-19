@@ -9,8 +9,8 @@ Dialog {
     standardButtons: Dialog.Ok
 
     title: qsTr("Advanced Settings")
-    width: 640
-    height: 420
+    width: 740
+    height: 500
     x: (parent.width - width) / 2
     y: (parent.height - height) / 2
 
@@ -33,17 +33,82 @@ Dialog {
         return "#ff000000";
     }
 
+    // 每行文字颜色（UI 反应式镜像，避免每次重绘都重新格式化）
+    function _validHex(c, fallback) {
+        return (c && c.startsWith("#") && c.length >= 7) ? c : fallback;
+    }
+    property string promptColor:        _validHex(SettingsController.lockPromptColor,        "#ffffffff")
+    property string currentTimeColor:   _validHex(SettingsController.lockCurrentTimeColor,   "#ffd3d3d3")
+    property string unlockTimeColor:    _validHex(SettingsController.lockUnlockTimeColor,    "#ffd3d3d3")
+    property string remainingTimeColor: _validHex(SettingsController.lockRemainingTimeColor, "#ffff6347")
+
+    // 文字位置：内部以英文键存储，UI 上展示本地化标签
+    readonly property var textPositionKeys: [
+        "top-left", "top-center", "top-right",
+        "center-left", "center", "center-right",
+        "bottom-left", "bottom-center", "bottom-right"
+    ]
+    readonly property var textPositionLabels: [
+        qsTr("Top Left"), qsTr("Top Center"), qsTr("Top Right"),
+        qsTr("Middle Left"), qsTr("Center"), qsTr("Middle Right"),
+        qsTr("Bottom Left"), qsTr("Bottom Center"), qsTr("Bottom Right")
+    ]
+
+    onAccepted: {
+        let bg = SettingsController.lockScreenBackground;
+        let lower = bg.toLowerCase();
+        if (bgModeCombo.currentIndex === 2) {
+            let valid = lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".bmp");
+            if (!valid) {
+                SettingsController.setLockScreenBackground(currentColor);
+                bgModeCombo.currentIndex = 0;
+            }
+        } else if (bgModeCombo.currentIndex === 3) {
+            let valid = lower.endsWith(".mp4") || lower.endsWith(".avi") || lower.endsWith(".mov") || lower.endsWith(".wmv") || lower.endsWith(".mkv");
+            if (!valid) {
+                SettingsController.setLockScreenBackground(currentColor);
+                bgModeCombo.currentIndex = 0;
+            }
+        }
+    }
+
     // ── 左右分区布局 ──
-    RowLayout {
+    // 用 Flickable 做可滚动容器，滚动条作为独立子项，不受 Style 覆盖
+    Flickable {
+        id: contentFlick
         anchors.fill: parent
         anchors.margins: 16
-        spacing: 24
+        anchors.leftMargin: 2
+        anchors.rightMargin: 6
+        anchors.topMargin: 8
+        anchors.bottomMargin: 16
+        clip: true
 
-        // 左侧：安全选项复选框
-        ColumnLayout {
-            Layout.alignment: Qt.AlignTop
-            Layout.fillHeight: true
-            spacing: 12
+        contentWidth: rowLayout.width
+        contentHeight: rowLayout.height
+
+        // 与规则列表保持一致的滚动条外观
+        ScrollBar.vertical: ScrollBar {
+            policy: ScrollBar.AsNeeded
+            contentItem: Rectangle {
+                color: "#CCFFFFFF"
+                radius: 4
+            }
+            width: 6
+        }
+
+        RowLayout {
+            id: rowLayout
+            width: contentFlick.width - (contentFlick.ScrollBar.vertical.visible ? contentFlick.ScrollBar.vertical.width : 0)
+            spacing: 24
+
+            // 左侧：安全选项复选框
+            ColumnLayout {
+                Layout.alignment: Qt.AlignTop
+                Layout.preferredWidth: 320
+                Layout.minimumWidth: 320
+                Layout.maximumWidth: 320
+                spacing: 12
             CheckBox {
                 text: qsTr("Auto Start")
                 checked: SettingsController.autostartEnabled
@@ -64,17 +129,134 @@ Dialog {
                 checked: SettingsController.killTaskmgr
                 onToggled: SettingsController.setKillTaskmgr(checked)
             }
-            CheckBox {
-                text: qsTr("Auto Time Sync")
-                checked: SettingsController.autoTimeSync
-                onToggled: SettingsController.setAutoTimeSync(checked)
+
+            // ── 自动校时设置 ──
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: 0
+                spacing: 6
+
+                CheckBox {
+                    id: autoSyncCheck
+                    text: qsTr("Auto Time Sync")
+                    checked: TimeSyncManager.enabled
+                    onToggled: TimeSyncManager.setEnabled(checked)
+                }
+
+                Label {
+                    text: qsTr("Time Server")
+                    Layout.leftMargin: 8
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 8
+                    spacing: 6
+                    TextField {
+                        id: serverField
+                        Layout.fillWidth: true
+                        placeholderText: qsTr("e.g. time.windows.com")
+                        text: TimeSyncManager.server
+                        onEditingFinished: TimeSyncManager.setServer(text)
+                    }
+                    Button {
+                        text: qsTr("Sync Now")
+                        enabled: autoSyncCheck.checked
+                        onClicked: {
+                            TimeSyncManager.setServer(serverField.text);
+                            TimeSyncManager.syncNow();
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 8
+                    spacing: 6
+                    Label {
+                        text: qsTr("Sync Interval (minutes)")
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+                    SpinBox {
+                        id: intervalSpin
+                        from: 1
+                        to: 10080
+                        value: TimeSyncManager.intervalMinutes
+                        editable: true
+                        onValueModified: TimeSyncManager.setIntervalMinutes(value)
+                    }
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 8
+                    wrapMode: Text.WordWrap
+                    text: TimeSyncManager.lastSyncTime.length > 0
+                        ? qsTr("Last sync: %1 - %2")
+                            .arg(TimeSyncManager.lastSyncTime)
+                            .arg(TimeSyncManager.lastSyncStatus)
+                        : qsTr("Last sync: never")
+                    color: TimeSyncManager.lastSyncSuccess ? "#2e7d32" : palette.windowText
+                    font.pixelSize: 12
+                }
+            }
+
+            // ── 语言设置 ──
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: 4
+                spacing: 8
+
+                Label {
+                    text: qsTr("Language")
+                    font.bold: true
+                }
+
+                ComboBox {
+                    id: languageCombo
+                    Layout.fillWidth: true
+                    model: ListModel {
+                        ListElement { text: qsTr("English"); code: "en_US" }
+                        ListElement { text: qsTr("简体中文"); code: "zh_CN" }
+                        ListElement { text: qsTr("繁體中文"); code: "zh_TW" }
+                        ListElement { text: qsTr("한국어"); code: "ko" }
+                        ListElement { text: qsTr("日本語"); code: "ja_JP" }
+                    }
+                    textRole: "text"
+                    Component.onCompleted: {
+                        let curLang = LanguageSwitcher.currentLanguage;
+                        for (let i = 0; i < model.count; ++i) {
+                            if (model.get(i).code === curLang) {
+                                currentIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                    onActivated: function(index) {
+                        LanguageSwitcher.switchLanguage(model.get(index).code);
+                    }
+                }
+            }
+
+            // ── 导出 / 导入 ──
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: 4
+                spacing: 8
+                Button {
+                    text: qsTr("Export Settings")
+                    onClicked: exportFileDialog.open()
+                }
+                Button {
+                    text: qsTr("Import Settings")
+                    onClicked: importFileDialog.open()
+                }
             }
         }
 
-        // 右侧：锁屏背景 + 语言设置
+        // 右侧：锁屏背景 + 锁屏文字
         ColumnLayout {
             Layout.alignment: Qt.AlignTop
-            Layout.fillHeight: true
+            Layout.fillWidth: true
             spacing: 16
 
             // ── 锁屏背景设置 ──
@@ -122,9 +304,18 @@ Dialog {
                         border.color: palette.mid
                     }
                     TextField {
+                        id: colorHexField
                         Layout.fillWidth: true
-                        readOnly: true
-                        text: currentColor
+                        onVisibleChanged: if (visible) text = currentColor
+                        onEditingFinished: {
+                            let v = text.trim();
+                            if (v.startsWith("#") && v.length >= 7) {
+                                SettingsController.setLockScreenBackground(v);
+                            } else {
+                                // 不符合 hex 格式，立即还原
+                                text = currentColor;
+                            }
+                        }
                     }
                     Button {
                         text: qsTr("Pick Color")
@@ -142,21 +333,27 @@ Dialog {
                     TextField {
                         id: imagePathField
                         Layout.fillWidth: true
-                        readOnly: true
-                        text: {
-                            let bg = SettingsController.lockScreenBackground;
-                            let lower = bg.toLowerCase();
-                            let isImage = lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".bmp");
-                            return isImage ? bg : qsTr("No image selected");
+                        onVisibleChanged: if (visible) text = SettingsController.lockScreenBackground
+                        onEditingFinished: {
+                            let v = text.trim();
+                            if (v.length === 0) {
+                                // 空输入 → 还原
+                                text = SettingsController.lockScreenBackground;
+                                return;
+                            }
+                            let lower = v.toLowerCase();
+                            if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".bmp")) {
+                                bgModeCombo.currentIndex = 2;
+                                SettingsController.setLockScreenBackground(v);
+                            } else {
+                                // 不符合图片后缀，还原
+                                text = SettingsController.lockScreenBackground;
+                            }
                         }
                     }
                     Button {
                         text: qsTr("Choose Image")
                         onClicked: imageFileDialog.open()
-                    }
-                    Button {
-                        text: qsTr("Clear")
-                        onClicked: SettingsController.setLockScreenBackground(currentColor)
                     }
                 }
 
@@ -167,72 +364,144 @@ Dialog {
                     TextField {
                         id: videoPathField
                         Layout.fillWidth: true
-                        readOnly: true
-                        text: {
-                            let bg = SettingsController.lockScreenBackground;
-                            let lower = bg.toLowerCase();
-                            let isVideo = lower.endsWith(".mp4") || lower.endsWith(".avi") || lower.endsWith(".mov") || lower.endsWith(".wmv") || lower.endsWith(".mkv");
-                            return isVideo ? bg : qsTr("No video selected");
+                        onVisibleChanged: if (visible) text = SettingsController.lockScreenBackground
+                        onEditingFinished: {
+                            let v = text.trim();
+                            if (v.length === 0) {
+                                text = SettingsController.lockScreenBackground;
+                                return;
+                            }
+                            let lower = v.toLowerCase();
+                            if (lower.endsWith(".mp4") || lower.endsWith(".avi") || lower.endsWith(".mov") || lower.endsWith(".wmv") || lower.endsWith(".mkv")) {
+                                bgModeCombo.currentIndex = 3;
+                                SettingsController.setLockScreenBackground(v);
+                            } else {
+                                text = SettingsController.lockScreenBackground;
+                            }
                         }
                     }
                     Button {
                         text: qsTr("Choose Video")
                         onClicked: videoFileDialog.open()
                     }
-                    Button {
-                        text: qsTr("Clear")
-                        onClicked: SettingsController.setLockScreenBackground(currentColor)
-                    }
                 }
             }
 
-            // ── 语言设置 ──
+            // ── 锁屏文字设置 ──
             ColumnLayout {
                 spacing: 8
 
                 Label {
-                    text: qsTr("Language")
+                    text: qsTr("Lock Screen Text")
                     font.bold: true
                 }
 
-                ComboBox {
-                    id: languageCombo
+                // 自定义提示词
+                Label { text: qsTr("Custom Prompt") }
+                TextField {
+                    id: promptField
                     Layout.fillWidth: true
-                    model: ListModel {
-                        ListElement { text: qsTr("English"); code: "en_US" }
-                        ListElement { text: qsTr("简体中文"); code: "zh_CN" }
-                        ListElement { text: qsTr("繁體中文"); code: "zh_TW" }
-                        ListElement { text: qsTr("한국어"); code: "ko" }
-                        ListElement { text: qsTr("日本語"); code: "ja_JP" }
-                    }
-                    textRole: "text"
-                    Component.onCompleted: {
-                        let curLang = LanguageSwitcher.currentLanguage;
-                        for (let i = 0; i < model.count; ++i) {
-                            if (model.get(i).code === curLang) {
-                                currentIndex = i;
-                                break;
+                    placeholderText: qsTr("Default: Device Locked")
+                    text: SettingsController.lockScreenPromptText
+                    onEditingFinished: SettingsController.setLockScreenPromptText(text)
+                }
+
+                // 各行文字颜色（提示词 / 当前时间 / 解锁时间 / 剩余时间）
+                Label {
+                    text: qsTr("Text Color")
+                    Layout.topMargin: 4
+                }
+                Repeater {
+                    model: [
+                        { key: "prompt",    label: qsTr("Prompt"),         color: promptColor },
+                        { key: "current",   label: qsTr("Current Time"),   color: currentTimeColor },
+                        { key: "unlock",    label: qsTr("Unlock Time"),    color: unlockTimeColor },
+                        { key: "remaining", label: qsTr("Remaining Time"), color: remainingTimeColor }
+                    ]
+                    delegate: RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        Label {
+                            text: modelData.label
+                            Layout.preferredWidth: 96
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+                        Rectangle {
+                            width: 28; height: 28; radius: 4
+                            color: modelData.color
+                            border.color: palette.mid
+                        }
+                        TextField {
+                            Layout.fillWidth: true
+                            Component.onCompleted: text = modelData.color
+                            onEditingFinished: {
+                                let v = text.trim();
+                                if (v.startsWith("#") && v.length >= 7) {
+                                    if (modelData.key === "prompt")
+                                        SettingsController.setLockPromptColor(v);
+                                    else if (modelData.key === "current")
+                                        SettingsController.setLockCurrentTimeColor(v);
+                                    else if (modelData.key === "unlock")
+                                        SettingsController.setLockUnlockTimeColor(v);
+                                    else if (modelData.key === "remaining")
+                                        SettingsController.setLockRemainingTimeColor(v);
+                                } else {
+                                    text = modelData.color;
+                                }
+                            }
+                        }
+                        Button {
+                            text: qsTr("Pick Color")
+                            onClicked: {
+                                textColorDialog.targetKey = modelData.key;
+                                textColorDialog.selectedColor = modelData.color;
+                                textColorDialog.open();
                             }
                         }
                     }
-                    onActivated: function(index) {
-                        LanguageSwitcher.switchLanguage(model.get(index).code);
+                }
+
+                // 文字位置
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    Label {
+                        text: qsTr("Text Position")
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+                    ComboBox {
+                        id: textPositionCombo
+                        Layout.fillWidth: true
+                        model: textPositionLabels
+                        currentIndex: {
+                            let idx = textPositionKeys.indexOf(SettingsController.lockScreenTextPosition);
+                            return idx >= 0 ? idx : 4; // default to "center"
+                        }
+                        onActivated: function(index) {
+                            SettingsController.setLockScreenTextPosition(textPositionKeys[index]);
+                        }
                     }
                 }
-            }
-            // 导出导入按钮
-            RowLayout {
-                spacing: 8
-                Button {
-                    text: qsTr("Export Settings")
-                    onClicked: exportFileDialog.open()
+
+                // 隐藏各时间项
+                CheckBox {
+                    text: qsTr("Hide Current Time")
+                    checked: SettingsController.hideCurrentTime
+                    onToggled: SettingsController.setHideCurrentTime(checked)
                 }
-                Button {
-                    text: qsTr("Import Settings")
-                    onClicked: importFileDialog.open()
+                CheckBox {
+                    text: qsTr("Hide Unlock Time")
+                    checked: SettingsController.hideUnlockTime
+                    onToggled: SettingsController.setHideUnlockTime(checked)
+                }
+                CheckBox {
+                    text: qsTr("Hide Remaining Time")
+                    checked: SettingsController.hideRemainingTime
+                    onToggled: SettingsController.setHideRemainingTime(checked)
                 }
             }
         }
+    }
     }
 
     // 对话框级的文件/颜色选择器
@@ -244,6 +513,24 @@ Dialog {
             currentColor = fullColor;
             if (bgModeCombo.currentIndex === 0)
                 SettingsController.setLockScreenBackground(fullColor);
+        }
+    }
+
+    ColorDialog {
+        id: textColorDialog
+        title: qsTr("Select Text Color")
+        // 由调用方设置：prompt / current / unlock / remaining
+        property string targetKey: ""
+        onAccepted: {
+            let fullColor = selectedColor.toString();
+            if (targetKey === "prompt")
+                SettingsController.setLockPromptColor(fullColor);
+            else if (targetKey === "current")
+                SettingsController.setLockCurrentTimeColor(fullColor);
+            else if (targetKey === "unlock")
+                SettingsController.setLockUnlockTimeColor(fullColor);
+            else if (targetKey === "remaining")
+                SettingsController.setLockRemainingTimeColor(fullColor);
         }
     }
 
@@ -274,13 +561,9 @@ Dialog {
             }
             let err = SettingsController.exportSettings(path);
             if (err) {
-                importErrorDialog.text = err;
-                importErrorDialog.title = qsTr("Export Error");
-                importErrorDialog.open();
+                SettingsController.showMessage(qsTr("Export Error"), err);
             } else {
-                importErrorDialog.text = qsTr("Settings exported successfully.");
-                importErrorDialog.title = qsTr("Success");
-                importErrorDialog.open();
+                SettingsController.showMessage(qsTr("Success"), qsTr("Settings exported successfully."));
             }
         }
     }
@@ -298,21 +581,14 @@ Dialog {
             }
             let err = SettingsController.importSettings(path);
             if (err) {
-                importErrorDialog.text = err;
-                importErrorDialog.title = qsTr("Import Error");
-                importErrorDialog.open();
+                SettingsController.showMessage(qsTr("Import Error"), err);
             } else {
                 LanguageSwitcher.reloadLanguage();
                 SettingsController.timeRuleModel.reload();
-                importErrorDialog.text = qsTr("Settings imported successfully.");
-                importErrorDialog.title = qsTr("Success");
-                importErrorDialog.open();
+                SettingsController.showMessage(qsTr("Success"), qsTr("Settings imported successfully."));
             }
         }
     }
 
-    MessageDialog {
-        id: importErrorDialog
-        buttons: MessageDialog.Ok
-    }
+
 }

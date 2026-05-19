@@ -1,10 +1,10 @@
 ﻿#include "SettingsController.h"
-#include <QSettings>
+#include "ConfigManager.h"
 #include <QCoreApplication>
 #include <QProcess>
 #include <QFile>
-#include <QJsonDocument>
-#include <QJsonObject>
+#include <QMessageBox>
+
 #include <QDebug>
 
 SettingsController::SettingsController(QObject *parent)
@@ -64,109 +64,192 @@ void SettingsController::updateAutostartTask(bool enable)
 // ---------- 安全选项 ----------
 bool SettingsController::isDisableTaskManager() const
 {
-    QSettings settings;
-    return settings.value("DisableTaskManager", true).toBool();
+    return ConfigManager::instance()->readBool("DisableTaskManager", true);
 }
 void SettingsController::setDisableTaskManager(bool disable)
 {
     if (isDisableTaskManager() == disable) return;
-    QSettings settings;
-    settings.setValue("DisableTaskManager", disable);
+    ConfigManager::instance()->writeBool("DisableTaskManager", disable);
     emit disableTaskManagerChanged(disable);
 }
 
 bool SettingsController::isEnableInputBlock() const
 {
-    QSettings settings;
-    return settings.value("EnableInputBlock", true).toBool();
+    return ConfigManager::instance()->readBool("EnableInputBlock", true);
 }
 void SettingsController::setEnableInputBlock(bool enable)
 {
     if (isEnableInputBlock() == enable) return;
-    QSettings settings;
-    settings.setValue("EnableInputBlock", enable);
+    ConfigManager::instance()->writeBool("EnableInputBlock", enable);
     emit enableInputBlockChanged(enable);
 }
 
 bool SettingsController::isKillTaskmgr() const
 {
-    QSettings settings;
-    return settings.value("KillTaskmgr", true).toBool();
+    return ConfigManager::instance()->readBool("KillTaskmgr", true);
 }
 void SettingsController::setKillTaskmgr(bool kill)
 {
     if (isKillTaskmgr() == kill) return;
-    QSettings settings;
-    settings.setValue("KillTaskmgr", kill);
+    ConfigManager::instance()->writeBool("KillTaskmgr", kill);
     emit killTaskmgrChanged(kill);
-}
-
-bool SettingsController::isAutoTimeSync() const
-{
-    QSettings settings;
-    return settings.value("AutoTimeSync", false).toBool();
-}
-void SettingsController::setAutoTimeSync(bool enabled)
-{
-    if (isAutoTimeSync() == enabled) return;
-    QSettings settings;
-    settings.setValue("AutoTimeSync", enabled);
-    emit autoTimeSyncChanged(enabled);
 }
 
 QString SettingsController::lockScreenBackground() const
 {
-    QSettings settings;
-    return settings.value("LockBackground", "#000000").toString();
+    return ConfigManager::instance()->readString("LockBackground", "#000000");
 }
 void SettingsController::setLockScreenBackground(const QString &background)
 {
     if (lockScreenBackground() == background) return;
-    QSettings settings;
-    settings.setValue("LockBackground", background);
+    ConfigManager::instance()->writeString("LockBackground", background);
     emit lockScreenBackgroundChanged(background);
+}
+
+QString SettingsController::lockPromptColor() const
+{
+    return ConfigManager::instance()->readString("LockPromptColor", "#ffffffff");
+}
+void SettingsController::setLockPromptColor(const QString &color)
+{
+    if (lockPromptColor() == color) return;
+    ConfigManager::instance()->writeString("LockPromptColor", color);
+    emit lockPromptColorChanged(color);
+}
+
+QString SettingsController::lockCurrentTimeColor() const
+{
+    return ConfigManager::instance()->readString("LockCurrentTimeColor", "#ffd3d3d3");
+}
+void SettingsController::setLockCurrentTimeColor(const QString &color)
+{
+    if (lockCurrentTimeColor() == color) return;
+    ConfigManager::instance()->writeString("LockCurrentTimeColor", color);
+    emit lockCurrentTimeColorChanged(color);
+}
+
+QString SettingsController::lockUnlockTimeColor() const
+{
+    return ConfigManager::instance()->readString("LockUnlockTimeColor", "#ffd3d3d3");
+}
+void SettingsController::setLockUnlockTimeColor(const QString &color)
+{
+    if (lockUnlockTimeColor() == color) return;
+    ConfigManager::instance()->writeString("LockUnlockTimeColor", color);
+    emit lockUnlockTimeColorChanged(color);
+}
+
+QString SettingsController::lockRemainingTimeColor() const
+{
+    return ConfigManager::instance()->readString("LockRemainingTimeColor", "#ffff6347");
+}
+void SettingsController::setLockRemainingTimeColor(const QString &color)
+{
+    if (lockRemainingTimeColor() == color) return;
+    ConfigManager::instance()->writeString("LockRemainingTimeColor", color);
+    emit lockRemainingTimeColorChanged(color);
+}
+
+QString SettingsController::lockScreenTextPosition() const
+{
+    return ConfigManager::instance()->readString("LockTextPosition", "center");
+}
+void SettingsController::setLockScreenTextPosition(const QString &position)
+{
+    if (lockScreenTextPosition() == position) return;
+    ConfigManager::instance()->writeString("LockTextPosition", position);
+    emit lockScreenTextPositionChanged(position);
+}
+
+QString SettingsController::lockScreenPromptText() const
+{
+    return ConfigManager::instance()->readString("LockPromptText", QString());
+}
+void SettingsController::setLockScreenPromptText(const QString &text)
+{
+    if (lockScreenPromptText() == text) return;
+    ConfigManager::instance()->writeString("LockPromptText", text);
+    emit lockScreenPromptTextChanged(text);
+}
+
+bool SettingsController::hideCurrentTime() const
+{
+    return ConfigManager::instance()->readBool("HideCurrentTime", false);
+}
+void SettingsController::setHideCurrentTime(bool hide)
+{
+    if (hideCurrentTime() == hide) return;
+    ConfigManager::instance()->writeBool("HideCurrentTime", hide);
+    emit hideCurrentTimeChanged(hide);
+}
+
+bool SettingsController::hideUnlockTime() const
+{
+    return ConfigManager::instance()->readBool("HideUnlockTime", false);
+}
+void SettingsController::setHideUnlockTime(bool hide)
+{
+    if (hideUnlockTime() == hide) return;
+    ConfigManager::instance()->writeBool("HideUnlockTime", hide);
+    emit hideUnlockTimeChanged(hide);
+}
+
+bool SettingsController::hideRemainingTime() const
+{
+    return ConfigManager::instance()->readBool("HideRemainingTime", false);
+}
+void SettingsController::setHideRemainingTime(bool hide)
+{
+    if (hideRemainingTime() == hide) return;
+    ConfigManager::instance()->writeBool("HideRemainingTime", hide);
+    emit hideRemainingTimeChanged(hide);
 }
 
 // ---------- 导出/导入 ----------
 QString SettingsController::exportSettings(const QString &filePath)
 {
-    QSettings settings;
-    QStringList keys = settings.allKeys();
-    QJsonObject root;
-    for (const QString &key : keys)
-        root.insert(key, QJsonValue::fromVariant(settings.value(key)));
+    ConfigManager *cfg = ConfigManager::instance();
 
-    QFile file(filePath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-        return tr("Cannot open file for writing");
-    file.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
-    file.close();
+    // 先确保配置文件已保存到磁盘
+    cfg->saveToFile();
+
+    QString srcPath = cfg->configFilePath();
+
+    // 目标文件已存在则先删除
+    if (QFile::exists(filePath)) {
+        if (!QFile::remove(filePath))
+            return tr("Cannot overwrite existing file");
+    }
+
+    if (!QFile::copy(srcPath, filePath))
+        return tr("Cannot copy config file");
+
     return {};
 }
 
 QString SettingsController::importSettings(const QString &filePath)
 {
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        return tr("Cannot open file for reading");
+    ConfigManager *cfg = ConfigManager::instance();
+    QString destPath = cfg->configFilePath();
 
-    QByteArray data = file.readAll();
-    file.close();
+    // 先移除当前配置文件
+    QFile::remove(destPath);
 
-    QJsonParseError error;
-    QJsonDocument doc = QJsonDocument::fromJson(data, &error);
-    if (error.error != QJsonParseError::NoError)
-        return tr("JSON parse error: ") + error.errorString();
-    if (!doc.isObject())
-        return tr("Invalid settings file");
+    if (!QFile::copy(filePath, destPath))
+        return tr("Cannot import config file");
 
-    QJsonObject root = doc.object();
-    QSettings settings;
-    settings.clear();
-    for (auto it = root.begin(); it != root.end(); ++it)
-        settings.setValue(it.key(), it.value().toVariant());
-    settings.sync();
+    // 重新从文件加载配置
+    cfg->loadFromFile();
 
     emit settingsImported();
     return {};
+}
+
+void SettingsController::showMessage(const QString &title, const QString &text)
+{
+    QMessageBox msgBox;
+    msgBox.setWindowTitle(title);
+    msgBox.setText(text);
+    msgBox.setStandardButtons(QMessageBox::Ok);
+    msgBox.exec();
 }
