@@ -33,6 +33,7 @@ public:
     Q_INVOKABLE void addRule();
     Q_INVOKABLE void updateRule(int row, const QVariantMap &data);
     Q_INVOKABLE void removeRule(int row);
+    Q_INVOKABLE void reload();
 
     // 辅助方法
     TimeRule *ruleAt(int row) const;

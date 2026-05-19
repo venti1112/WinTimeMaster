@@ -3,12 +3,15 @@
 #include <QApplication>
 #include <QWindow>
 #include <QStyle>
+#include <QLocalSocket>
+#include <QDebug>
 
 TrayManager::TrayManager(QQmlApplicationEngine *engine, QObject *parent)
     : QObject(parent), m_engine(engine)
 {
     setupTrayIcon();
     setupMenu();
+    setupIpcServer();
 }
 
 void TrayManager::setupTrayIcon()
@@ -113,4 +116,25 @@ void TrayManager::updateTooltip()
                          ? tr("Service Running")
                          : tr("Service Stopped");
     m_trayIcon->setToolTip(tr("WinTimeMaster") + " - " + status);
+}
+void TrayManager::setupIpcServer()
+{
+    // 清理可能因上次崩溃残留的命名
+    QLocalServer::removeServer("WinTimeMaster_IPC");
+    m_ipcServer = new QLocalServer(this);
+    if (!m_ipcServer->listen("WinTimeMaster_IPC")) {
+        qWarning() << "Failed to start IPC server:" << m_ipcServer->errorString();
+        return;
+    }
+
+    connect(m_ipcServer, &QLocalServer::newConnection, this, [this]() {
+        QLocalSocket *client = m_ipcServer->nextPendingConnection();
+        if (client) {
+            // 只需要知道有消息即显示，可读取一下清空缓冲区
+            client->waitForReadyRead(1000);
+            client->readAll();
+            showSettingsWindow();
+            client->deleteLater();
+        }
+    });
 }

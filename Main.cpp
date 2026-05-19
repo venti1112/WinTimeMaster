@@ -5,6 +5,9 @@
 #include <QIcon>
 #include <QFont>
 #include <QCommandLineParser>
+#include <QLocalSocket>
+#include <QSharedMemory>
+#include <QSurfaceFormat>
 
 #include "Core/LanguageManager.h"
 #include "Core/SettingsController.h"
@@ -50,7 +53,26 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    QSurfaceFormat format;
+    format.setAlphaBufferSize(8);
+    QSurfaceFormat::setDefaultFormat(format);
+
     QApplication app(argc, argv);
+
+    // ----- 单实例检测 -----
+    QSharedMemory sharedMem("Global\\WinTimeMaster_SingleInstance");
+    if (!sharedMem.create(1)) {
+        // 已有实例运行，通过 IPC 通知旧实例显示窗口
+        QLocalSocket socket;
+        socket.connectToServer("WinTimeMaster_IPC");
+        if (socket.waitForConnected(2000)) {
+            socket.write("show");
+            socket.waitForBytesWritten(2000);
+        } else {
+            qWarning() << "Could not connect to existing instance.";
+        }
+        return 0;
+    }
 
     // 命令行解析
     QCommandLineParser parser;
@@ -68,10 +90,6 @@ int main(int argc, char *argv[])
     app.setWindowIcon(QIcon(":/icon.ico"));
 
     QQuickStyle::setStyle("FluentWinUI3");
-
-    QFont globalFont("Microsoft YaHei UI", 10);
-    globalFont.setStyleStrategy(QFont::PreferAntialias);
-    app.setFont(globalFont);
 
     QQmlApplicationEngine engine;
 
@@ -91,9 +109,6 @@ int main(int argc, char *argv[])
     QObject::connect(languageManager, &LanguageManager::languageChanged,
                      trayManager, &TrayManager::updateMenuTexts);
 
-    // 将启动模式传给 QML
-    engine.rootContext()->setContextProperty("startMinimized", startMinimized);
-
     QObject::connect(
         &engine,
         &QQmlApplicationEngine::objectCreationFailed,
@@ -102,6 +117,10 @@ int main(int argc, char *argv[])
         Qt::QueuedConnection);
 
     engine.loadFromModule("WinTimeMaster", "Settings");
+
+    if (!startMinimized) {
+        trayManager->showSettingsWindow();
+    }
 
     return app.exec();
 }

@@ -8,8 +8,8 @@
         <translation>设置</translation>
     </message>
     <message>
-        <source>Language</source>
-        <translation>语言</translation>
+        <source>Advanced Settings</source>
+        <translation>高级设置</translation>
     </message>
     <message>
         <source>Rules</source>
@@ -90,10 +90,6 @@
     <message>
         <source>Service Stopped</source>
         <translation>服务未运行</translation>
-    </message>
-    <message>
-        <source>Auto Start</source>
-        <translation>开机自启</translation>
     </message>
 </context>
 <context>
@@ -215,6 +211,140 @@
     <message>
         <source>Service Stopped</source>
         <translation>服务未运行</translation>
+    </message>
+</context>
+<context>
+    <name>AdvancedSettings</name>
+    <message>
+        <source>Advanced Settings</source>
+        <translation>高级设置</translation>
+    </message>
+    <message>
+        <source>Auto Start</source>
+        <translation>开机自启</translation>
+    </message>
+    <message>
+        <source>Disable Task Manager</source>
+        <translation>禁用任务管理器</translation>
+    </message>
+    <message>
+        <source>Enable Input Block</source>
+        <translation>启用输入拦截</translation>
+    </message>
+    <message>
+        <source>Force Close Taskmgr.exe</source>
+        <translation>强制结束Taskmgr.exe</translation>
+    </message>
+    <message>
+        <source>Auto Time Sync</source>
+        <translation>自动校时</translation>
+    </message>
+    <message>
+        <source>Lock Screen Background</source>
+        <translation>锁屏背景</translation>
+    </message>
+    <message>
+        <source>Solid Color</source>
+        <translation>纯色</translation>
+    </message>
+    <message>
+        <source>Transparent</source>
+        <translation>透明</translation>
+    </message>
+    <message>
+        <source>Custom Image</source>
+        <translation>自定义图片</translation>
+    </message>
+    <message>
+        <source>Custom Video</source>
+        <translation>自定义视频</translation>
+    </message>
+    <message>
+        <source>Pick Color</source>
+        <translation>选择颜色</translation>
+    </message>
+    <message>
+        <source>Select Background Color</source>
+        <translation>选择背景颜色</translation>
+    </message>
+    <message>
+        <source>No image selected</source>
+        <translation>未选择图片</translation>
+    </message>
+    <message>
+        <source>Choose Image</source>
+        <translation>选择图片</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>清除</translation>
+    </message>
+    <message>
+        <source>No video selected</source>
+        <translation>未选择视频</translation>
+    </message>
+    <message>
+        <source>Choose Video</source>
+        <translation>选择视频</translation>
+    </message>
+    <message>
+        <source>Select Background Image</source>
+        <translation>选择背景图片</translation>
+    </message>
+    <message>
+        <source>Select Background Video</source>
+        <translation>选择背景视频</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>语言</translation>
+    </message>
+    <message>
+        <source>Export Settings</source>
+        <translation>导出设置</translation>
+    </message>
+    <message>
+        <source>Import Settings</source>
+        <translation>导入设置</translation>
+    </message>
+    <message>
+        <source>Import Error</source>
+        <translation>导入错误</translation>
+    </message>
+    <message>
+        <source>Export Error</source>
+        <translation>导出错误</translation>
+    </message>
+    <message>
+        <source>Success</source>
+        <translation>成功</translation>
+    </message>
+    <message>
+        <source>Settings exported successfully.</source>
+        <translation>设置导出成功。</translation>
+    </message>
+    <message>
+        <source>Settings imported successfully.</source>
+        <translation>设置导入成功。</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsController</name>
+    <message>
+        <source>Cannot open file for writing</source>
+        <translation>无法打开文件写入</translation>
+    </message>
+    <message>
+        <source>Cannot open file for reading</source>
+        <translation>无法打开文件读取</translation>
+    </message>
+    <message>
+        <source>JSON parse error: </source>
+        <translation>JSON解析错误：</translation>
+    </message>
+    <message>
+        <source>Invalid settings file</source>
+        <translation>无效的设置文件</translation>
     </message>
 </context>
 </TS>

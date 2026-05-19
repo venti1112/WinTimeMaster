@@ -17,46 +17,46 @@ Dialog {
     property int weekDays: 0
     property bool ruleEnabled: true
 
-    // ── 临时变量（保证非 null） ──
+    // ── 临时变量 ──
     property var tempStartTime: startTime ? startTime : new Date(0, 0, 0, 9, 0)
     property var tempEndTime: endTime ? endTime : new Date(0, 0, 0, 10, 0)
     property int tempRepeatMode: repeatMode
     property int tempWeekDays: weekDays
     property bool tempRuleEnabled: ruleEnabled
 
-    // ── 窗口设定 ──
     title: ruleIndex === -1 ? qsTr("Add Rule") : qsTr("Edit Rule")
-    width: tempRepeatMode === 2 ? 540 : 360
+    width: tempRepeatMode === 2 ? 610 : 340
     height: 320
-
-    // 自动居中（属性绑定，动态更新）
     x: (parent.width - width) / 2
     y: (parent.height - height) / 2
 
     onOpened: {
-        // 打开时同步最新数据
-        if (startTime) tempStartTime = startTime;
-        else tempStartTime = new Date(0, 0, 0, 9, 0);
-        if (endTime) tempEndTime = endTime;
-        else tempEndTime = new Date(0, 0, 0, 10, 0);
-        tempRepeatMode = repeatMode;
-        tempWeekDays = weekDays;
-        tempRuleEnabled = ruleEnabled;
+        if (startTime) tempStartTime = startTime
+        else tempStartTime = new Date(0, 0, 0, 9, 0)
+        if (endTime) tempEndTime = endTime
+        else tempEndTime = new Date(0, 0, 0, 10, 0)
+        tempRepeatMode = repeatMode
+        tempWeekDays = weekDays
+        tempRuleEnabled = ruleEnabled
     }
 
     onAccepted: {
-        if (!ruleModel) return;
+        // 从 SpinBox 构造时间
+        tempStartTime = new Date(0, 0, 0, startHour.value, startMinute.value)
+        tempEndTime = new Date(0, 0, 0, endHour.value, endMinute.value)
+
+        if (!ruleModel) return
 
         if (ruleIndex === -1) {
-            ruleModel.addRule();
-            let newIndex = ruleModel.rowCount() - 1;
+            ruleModel.addRule()
+            let newIndex = ruleModel.rowCount() - 1
             ruleModel.updateRule(newIndex, {
                 startTime: tempStartTime,
                 endTime: tempEndTime,
                 repeatMode: tempRepeatMode,
                 weekDays: tempWeekDays,
                 enabled: tempRuleEnabled
-            });
+            })
         } else {
             ruleModel.updateRule(ruleIndex, {
                 startTime: tempStartTime,
@@ -64,7 +64,7 @@ Dialog {
                 repeatMode: tempRepeatMode,
                 weekDays: tempWeekDays,
                 enabled: tempRuleEnabled
-            });
+            })
         }
     }
 
@@ -72,6 +72,10 @@ Dialog {
     RowLayout {
         anchors.fill: parent
         anchors.margins: 16
+        anchors.leftMargin: 2
+        anchors.rightMargin: 6
+        anchors.topMargin: 8
+        anchors.bottomMargin: 16
         spacing: 20
 
         // 左侧：基本设置
@@ -82,40 +86,50 @@ Dialog {
 
             // 启用开关
             RowLayout {
-                Label { text: qsTr("Enabled") }
+                Label { text: qsTr("Enabled"); Layout.preferredWidth: 65 }
                 Switch {
                     checked: tempRuleEnabled
                     onToggled: tempRuleEnabled = checked
                 }
             }
 
-            // 开始时间
+            // 开始时间（小时+分钟）
             RowLayout {
-                Label { text: qsTr("Start Time") }
-                TextField {
-                    text: tempStartTime.toLocaleTimeString(Qt.locale(), "HH:mm")
-                    inputMask: "99:99"
-                    Layout.preferredWidth: 80
-                    onEditingFinished: {
-                        let parts = text.split(":");
-                        if (parts.length === 2)
-                            tempStartTime = new Date(0, 0, 0, parseInt(parts[0]), parseInt(parts[1]));
-                    }
+                Label { text: qsTr("Start Time"); Layout.preferredWidth: 65 }
+                SpinBox {
+                    id: startHour
+                    from: 0; to: 23
+                    value: tempStartTime.getHours()
+                    editable: true
+                    Layout.preferredWidth: 100
+                }
+                Label { text: ":" }
+                SpinBox {
+                    id: startMinute
+                    from: 0; to: 59
+                    value: tempStartTime.getMinutes()
+                    editable: true
+                    Layout.preferredWidth: 100
                 }
             }
 
-            // 结束时间
+            // 结束时间（小时+分钟）
             RowLayout {
-                Label { text: qsTr("End Time") }
-                TextField {
-                    text: tempEndTime.toLocaleTimeString(Qt.locale(), "HH:mm")
-                    inputMask: "99:99"
-                    Layout.preferredWidth: 80
-                    onEditingFinished: {
-                        let parts = text.split(":");
-                        if (parts.length === 2)
-                            tempEndTime = new Date(0, 0, 0, parseInt(parts[0]), parseInt(parts[1]));
-                    }
+                Label { text: qsTr("End Time"); Layout.preferredWidth: 65 }
+                SpinBox {
+                    id: endHour
+                    from: 0; to: 23
+                    value: tempEndTime.getHours()
+                    editable: true
+                    Layout.preferredWidth: 100
+                }
+                Label { text: ":" }
+                SpinBox {
+                    id: endMinute
+                    from: 0; to: 59
+                    value: tempEndTime.getMinutes()
+                    editable: true
+                    Layout.preferredWidth: 100
                 }
             }
 
@@ -123,14 +137,14 @@ Dialog {
             RowLayout {
                 Label {
                     text: qsTr("Repeat")
-                    Layout.preferredWidth: 70
+                    Layout.preferredWidth: 65
                 }
                 ComboBox {
                     id: repeatCombo
                     model: [qsTr("Once"), qsTr("Daily"), qsTr("Weekdays")]
                     currentIndex: tempRepeatMode
-                    Layout.preferredWidth: 120
-                    onActivated: function(index) { tempRepeatMode = index; }
+                    Layout.preferredWidth: 100
+                    onActivated: function(index) { tempRepeatMode = index }
                 }
             }
         }
@@ -165,10 +179,8 @@ Dialog {
                         text: modelData.text
                         checked: (tempWeekDays & modelData.value) !== 0
                         onToggled: {
-                            if (checked)
-                                tempWeekDays |= modelData.value;
-                            else
-                                tempWeekDays &= ~modelData.value;
+                            if (checked) tempWeekDays |= modelData.value
+                            else tempWeekDays &= ~modelData.value
                         }
                     }
                 }

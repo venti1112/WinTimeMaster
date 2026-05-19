@@ -24,6 +24,7 @@ find_package(Qt6 REQUIRED COMPONENTS
     Quick
     QuickControls2
     Widgets
+    Multimedia
     LinguistTools
 )
 
@@ -64,6 +65,8 @@ qt_add_qml_module(WinTimeMaster
     RESOURCES
         Resources.qrc
         SOURCES Core/LockController.h Core/LockController.cpp
+        QML_FILES UI/PasswordDialog.qml
+        QML_FILES UI/AdvancedSettings.qml
 )
 
 set_target_properties(WinTimeMaster PROPERTIES
@@ -81,6 +84,7 @@ target_link_libraries(WinTimeMaster
         Qt6::Quick
         Qt6::QuickControls2
         Qt6::Widgets
+        Qt6::Multimedia
 )
 
 install(TARGETS WinTimeMaster

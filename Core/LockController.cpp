@@ -6,6 +6,7 @@
 #include <QScreen>
 #include <QGuiApplication>
 #include <QProcess>
+#include <QSettings>
 #include <QDebug>
 
 #ifdef Q_OS_WIN
@@ -37,6 +38,13 @@ LockController::LockController(TimeRuleModel *model, QQmlApplicationEngine *engi
     m_timer = new QTimer(this);
     m_timer->setInterval(1000);
     connect(m_timer, &QTimer::timeout, this, &LockController::checkLockRules);
+
+    // 恢复上次服务状态
+    QSettings settings;
+    bool lastRunning = settings.value("ServiceRunning", false).toBool();
+    if (lastRunning) {
+        startChecking();
+    }
 }
 
 // ---------- 系统限制 ----------
@@ -65,16 +73,29 @@ void LockController::disableTaskManager(bool disable)
 
 void LockController::applySystemRestrictions()
 {
-    blockInput(true);
-    disableTaskManager(true);
-    // 强制结束可能已运行的任务管理器
-    QProcess::execute("taskkill", QStringList() << "/f" << "/im" << "taskmgr.exe");
+    QSettings settings;
+    if (settings.value("EnableInputBlock", true).toBool())
+        blockInput(true);
+    if (settings.value("DisableTaskManager", true).toBool())
+        disableTaskManager(true);
+    if (settings.value("KillTaskmgr", true).toBool())
+        QProcess::execute("taskkill", QStringList() << "/f" << "/im" << "taskmgr.exe");
 }
 
 void LockController::removeSystemRestrictions()
 {
-    blockInput(false);
-    disableTaskManager(false);
+    QSettings settings;
+    if (settings.value("EnableInputBlock", true).toBool())
+        blockInput(false);
+    if (settings.value("DisableTaskManager", true).toBool())
+        disableTaskManager(false);
+}
+
+// ---------- 状态持久化 ----------
+void LockController::saveServiceState()
+{
+    QSettings settings;
+    settings.setValue("ServiceRunning", m_checking);
 }
 
 bool LockController::isChecking() const
@@ -88,6 +109,7 @@ void LockController::startChecking()
     m_checking = true;
     m_timer->start();
     checkLockRules();
+    saveServiceState();
     emit checkingChanged(true);
 }
 
@@ -99,6 +121,7 @@ void LockController::stopChecking()
     removeSystemRestrictions();
     if (m_lockWindow)
         m_lockWindow->hide();
+    saveServiceState();
     emit checkingChanged(false);
 }
 
@@ -198,11 +221,21 @@ void LockController::checkLockRules()
         m_lockWindow->setProperty("unlockTime", unlockTimeStr);
         m_lockWindow->setProperty("remainingTime", remainingStr);
 
-        // 每次检查都强制应用系统限制，解决 Win+L 后 BlockInput 失效问题
+        // 同步背景图片
+        QSettings settings;
+        QString bgImage = settings.value("LockBackground", "").toString();
+        m_lockWindow->setProperty("backgroundImage", bgImage);
+
+        if (isLocked && !m_wasLocked) {
+            QSettings settings;
+            if (settings.value("AutoTimeSync", false).toBool())
+                syncSystemTime();
+        }
+        m_wasLocked = isLocked;
+
         applySystemRestrictions();
 
         if (!m_lockWindow->isVisible()) {
-            // 首次显示前计算所有屏幕的并集矩形
             QRect totalRect;
             const auto screens = QGuiApplication::screens();
             for (QScreen *screen : screens)
@@ -218,4 +251,13 @@ void LockController::checkLockRules()
             m_lockWindow->hide();
         }
     }
+}
+void LockController::syncSystemTime()
+{
+#ifdef Q_OS_WIN
+    // 使用 Windows 时间服务强制同步
+    QProcess::startDetached("w32tm", QStringList() << "/resync");
+#else
+    // 非 Windows 暂不实现
+#endif
 }

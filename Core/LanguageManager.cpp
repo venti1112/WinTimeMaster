@@ -144,3 +144,13 @@ void LanguageManager::detectAndLoadLanguage()
         loadTranslation("en_US");
     }
 }
+void LanguageManager::reloadLanguage()
+{
+    QSettings settings;
+    QString lang = settings.value("Language").toString();
+    if (lang.isEmpty()) {
+        lang = QLocale::system().name();
+        // 可选映射
+    }
+    switchLanguage(lang);
+}

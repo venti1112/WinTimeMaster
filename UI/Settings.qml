@@ -4,7 +4,7 @@ import QtQuick.Layouts
 
 ApplicationWindow {
     id: settingsWindow
-    visible: !startMinimized
+    visible: false
     width: 800
     height: 480
     title: qsTr("Settings")
@@ -33,7 +33,7 @@ ApplicationWindow {
         // ── 带外框的规则列表（占据主要空间） ──
         Rectangle {
             Layout.fillWidth: true
-            Layout.fillHeight: true          // 关键：填满剩余高度
+            Layout.fillHeight: true
             border.color: palette.mid
             border.width: 2
             radius: 4
@@ -46,6 +46,14 @@ ApplicationWindow {
                 model: timeRuleModel
                 clip: true
                 spacing: 0
+
+                ScrollBar.vertical: ScrollBar {
+                    contentItem: Rectangle {
+                        color: "#CCFFFFFF"   // 半透明深灰，比默认主题明显
+                        radius: 4
+                    }
+                    width: 6
+                }
 
                 delegate: Rectangle {
                     width: ruleListView.width
@@ -61,7 +69,7 @@ ApplicationWindow {
                             let start = model.startTime.toLocaleTimeString(Qt.locale(), "HH:mm");
                             let end = model.endTime.toLocaleTimeString(Qt.locale(), "HH:mm");
                             let modeStr;
-                            if (model.repeatMode === 2) {   // WeekDays
+                            if (model.repeatMode === 2) {
                                 let dayNames = [
                                     qsTr("Mon"), qsTr("Tue"), qsTr("Wed"),
                                     qsTr("Thu"), qsTr("Fri"), qsTr("Sat"), qsTr("Sun")
@@ -128,7 +136,7 @@ ApplicationWindow {
         // ── 底部操作栏 ──
         RowLayout {
             Layout.fillWidth: true
-            spacing: 16
+            spacing: 12
 
             Button {
                 text: qsTr("Add Rule")
@@ -143,13 +151,12 @@ ApplicationWindow {
                     ruleEditorDialog.open();
                 }
             }
+
             Button {
                 text: LockController.checking ? qsTr("Stop Service") : qsTr("Start Service")
-                onClicked: {
-                    LockController.toggleChecking();
-                }
+                onClicked: LockController.toggleChecking()
             }
-            // 状态指示灯（红/绿圆点）
+
             Rectangle {
                 width: 14
                 height: 14
@@ -158,69 +165,27 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignVCenter
             }
 
-            // 状态文字
             Label {
                 text: LockController.checking ? qsTr("Service Running") : qsTr("Service Stopped")
                 Layout.alignment: Qt.AlignVCenter
-                font.pixelSize: 13
+                font.bold: true
             }
 
-            CheckBox {
-                id: autostartCheck
-                text: qsTr("Auto Start")
-                checked: SettingsController.autostartEnabled
-                onToggled: SettingsController.setAutostartEnabled(checked)
-                Layout.alignment: Qt.AlignVCenter
-            }
-
-            // 占位，把语言设置推到右侧
             Item { Layout.fillWidth: true }
 
-            // 语言设置（紧凑排列）
-            RowLayout {
-                spacing: 8
-                Label {
-                    text: qsTr("Language")
-                    Layout.alignment: Qt.AlignVCenter
-                }
-                ComboBox {
-                    id: languageCombo
-                    Layout.preferredWidth: 130
-
-                    // 语言模型：显示文本需在翻译文件中定义
-                    ListModel {
-                        id: languageModel
-                        ListElement { text: qsTr("English"); code: "en_US" }
-                        ListElement { text: qsTr("简体中文"); code: "zh_CN" }
-                        ListElement { text: qsTr("繁體中文"); code: "zh_TW" }
-                        ListElement { text: qsTr("한국어"); code: "ko" }
-                        ListElement { text: qsTr("日本語"); code: "ja_JP" }
-                    }
-                    model: languageModel
-                    textRole: "text"
-
-                    // 根据当前语言代码设置初始索引
-                    Component.onCompleted: function() {
-                        for (let i = 0; i < languageModel.count; ++i) {
-                            if (languageModel.get(i).code === currentLang) {
-                                currentIndex = i;
-                                break;
-                            }
-                        }
-                    }
-
-                    onActivated: function(index) {
-                        let langCode = languageModel.get(index).code;
-                        LanguageSwitcher.switchLanguage(langCode);
-                    }
-                }
+            Button {
+                text: qsTr("Advanced Settings")
+                onClicked: advancedSettingsDialog.open()
             }
         }
 
-        // ── 编辑对话框 ──
+        // 对话框实例
         RuleEditor {
             id: ruleEditorDialog
             ruleModel: timeRuleModel
+        }
+        AdvancedSettings {
+            id: advancedSettingsDialog
         }
     }
 }

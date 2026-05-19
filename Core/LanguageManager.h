@@ -17,6 +17,7 @@ public:
     QString currentLanguage() const;
 
     Q_INVOKABLE void switchLanguage(const QString &languageCode);
+    Q_INVOKABLE void reloadLanguage();
 
 signals:
     void languageChanged();

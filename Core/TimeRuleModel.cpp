@@ -187,11 +187,19 @@ void TimeRuleModel::saveRules()
     }
 
     QSettings settings;
-    settings.setValue("TimeRules", QJsonDocument(arr).toJson());
+    settings.setValue("TimeRules", QJsonDocument(arr).toJson(QJsonDocument::Compact));
     qDebug() << "Saved" << arr.size() << "time rules.";
 }
 
 int TimeRuleModel::nextRuleId()
 {
     return m_nextId++;
+}
+void TimeRuleModel::reload()
+{
+    beginResetModel();
+    qDeleteAll(m_rules);
+    m_rules.clear();
+    endResetModel();
+    loadRules();   // 从 QSettings 重新加载规则
 }

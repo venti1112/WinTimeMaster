@@ -6,6 +6,7 @@
 #include <QMenu>
 #include <QAction>
 #include <QQmlApplicationEngine>
+#include <QLocalServer>
 
 class LockController;
 
@@ -30,6 +31,7 @@ public slots:
 private:
     void setupTrayIcon();
     void setupMenu();
+    void setupIpcServer();
 
     QQmlApplicationEngine *m_engine = nullptr;
     QSystemTrayIcon *m_trayIcon = nullptr;
@@ -38,6 +40,7 @@ private:
     QAction *m_startStopAction = nullptr;
     QAction *m_quitAction = nullptr;
     LockController *m_lockCtrl = nullptr;
+    QLocalServer *m_ipcServer = nullptr;
 };
 
 #endif // TRAYMANAGER_H
