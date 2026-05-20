@@ -40,7 +40,14 @@ void TrayManager::setupMenu()
     m_startStopAction = nullptr;
 
     m_quitAction = m_trayMenu->addAction(tr("Quit"));
-    connect(m_quitAction, &QAction::triggered, qApp, &QApplication::quit);
+    connect(m_quitAction, &QAction::triggered, this, [this]() {
+        if (m_engine) {
+            QObject *rootObj = m_engine->rootObjects().value(0);
+            if (rootObj) {
+                QMetaObject::invokeMethod(rootObj, "quitWithPasswordCheck");
+            }
+        }
+    });
 
     m_trayIcon->setContextMenu(m_trayMenu);
 }
@@ -56,10 +63,17 @@ void TrayManager::setLockController(LockController *ctrl)
         m_startStopAction = nullptr;
     }
 
-    m_startStopAction = new QAction(tr("Start Service"), this);  // 改为 Service
+    m_startStopAction = new QAction(tr("Start Service"), this);
     m_trayMenu->insertAction(m_quitAction, m_startStopAction);
 
-    connect(m_startStopAction, &QAction::triggered, ctrl, &LockController::toggleChecking);
+    connect(m_startStopAction, &QAction::triggered, this, [this]() {
+        if (m_engine) {
+            QObject *rootObj = m_engine->rootObjects().value(0);
+            if (rootObj) {
+                QMetaObject::invokeMethod(rootObj, "toggleServiceWithPasswordCheck");
+            }
+        }
+    });
     connect(ctrl, &LockController::checkingChanged, this, [this](bool checking) {
         if (m_startStopAction)
             m_startStopAction->setText(checking ? tr("Stop Service") : tr("Start Service"));
@@ -73,10 +87,8 @@ void TrayManager::showSettingsWindow()
 {
     if (m_engine) {
         QObject *rootObj = m_engine->rootObjects().value(0);
-        if (auto window = qobject_cast<QWindow*>(rootObj)) {
-            window->show();
-            window->raise();
-            window->requestActivate();
+        if (rootObj) {
+            QMetaObject::invokeMethod(rootObj, "showWithPasswordCheck");
         }
     }
 }

@@ -5,7 +5,7 @@ import QtQuick.Layouts
 Dialog {
     id: ruleEditorDialog
     modal: true
-    standardButtons: Dialog.Ok | Dialog.Cancel
+    standardButtons: Dialog.NoButton
 
     // ── 外部属性 ──
     property var ruleModel: null
@@ -26,9 +26,25 @@ Dialog {
 
     title: ruleIndex === -1 ? qsTr("Add Rule") : qsTr("Edit Rule")
     width: tempRepeatMode === 2 ? 610 : 340
-    height: 320
+    height: 360
     x: (parent.width - width) / 2
     y: (parent.height - height) / 2
+
+    footer: DialogButtonBox {
+        contentItem: RowLayout {
+            spacing: 12
+            Button {
+                text: qsTr("Cancel")
+                onClicked: ruleEditorDialog.reject()
+            }
+            Item { Layout.fillWidth: true }
+            Button {
+                text: qsTr("OK")
+                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+                onClicked: ruleEditorDialog.accept()
+            }
+        }
+    }
 
     onOpened: {
         if (startTime) tempStartTime = startTime

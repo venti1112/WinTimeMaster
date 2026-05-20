@@ -53,11 +53,21 @@ qt_add_qml_module(WinTimeMaster
         UI/RuleEditor.qml
         UI/LockScreen.qml
         UI/AdvancedSettings.qml
+        UI/PasswordWindow.qml
+        UI/AboutDialog.qml
     SOURCES
         Core/LanguageManager.h
         Core/LanguageManager.cpp
         Core/SettingsController.h
         Core/SettingsController.cpp
+        Core/PasswordHasher.h
+        Core/PasswordHasher.cpp
+        Core/AboutController.h
+        Core/AboutController.cpp
+        Core/UpdateChecker.h
+        Core/UpdateChecker.cpp
+        Core/RemoteConfigUpdater.h
+        Core/RemoteConfigUpdater.cpp
         Core/TimeRule.h
         Core/TimeRule.cpp
         Core/TimeRuleModel.h
@@ -91,6 +101,7 @@ target_link_libraries(WinTimeMaster
         Qt6::Widgets
         Qt6::Multimedia
         Qt6::Network
+        bcrypt
 )
 
 install(TARGETS WinTimeMaster

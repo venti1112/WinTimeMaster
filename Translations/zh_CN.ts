@@ -2,6 +2,85 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="zh_CN">
 <context>
+    <name>AboutDialog</name>
+    <message>
+        <source>About</source>
+        <translation>关于</translation>
+    </message>
+    <message>
+        <source>Version</source>
+        <translation>版本</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>未知</translation>
+    </message>
+    <message>
+        <source>Developer:</source>
+        <translation>开发者：</translation>
+    </message>
+    <message>
+        <source>Qt Version:</source>
+        <translation>Qt 版本：</translation>
+    </message>
+    <message>
+        <source>Compiler:</source>
+        <translation>编译器：</translation>
+    </message>
+    <message>
+        <source>Build Type:</source>
+        <translation>编译类型：</translation>
+    </message>
+    <message>
+        <source>Checking...</source>
+        <translation>检查中...</translation>
+    </message>
+    <message>
+        <source>Check for Updates</source>
+        <translation>检查更新</translation>
+    </message>
+    <message>
+        <source>Download Update</source>
+        <translation>下载更新</translation>
+    </message>
+    <message>
+        <source>New version %1 available!</source>
+        <translation>新版本 %1 可用！</translation>
+    </message>
+    <message>
+        <source>You are using the latest version.</source>
+        <translation>您正在使用最新版本。</translation>
+    </message>
+    <message>
+        <source>Check failed: %1</source>
+        <translation>检查失败：%1</translation>
+    </message>
+    <message>
+        <source>Update Check Failed</source>
+        <translation>检查更新失败</translation>
+    </message>
+    <message>
+        <source>Up to Date</source>
+        <translation>已是最新</translation>
+    </message>
+    <message>
+        <source>Password Error</source>
+        <translation>密码错误</translation>
+    </message>
+    <message>
+        <source>Incorrect password</source>
+        <translation>密码不正确</translation>
+    </message>
+    <message>
+        <source>GitHub:</source>
+        <translation>GitHub：</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>关闭</translation>
+    </message>
+</context>
+<context>
     <name>Settings</name>
     <message>
         <source>Settings</source>
@@ -91,6 +170,10 @@
         <source>Service Stopped</source>
         <translation>服务未运行</translation>
     </message>
+    <message>
+        <source>About</source>
+        <translation>关于</translation>
+    </message>
 </context>
 <context>
     <name>RuleEditor</name>
@@ -161,6 +244,14 @@
     <message>
         <source>Sun</source>
         <translation>星期日</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>确定</translation>
     </message>
 </context>
 <context>
@@ -234,6 +325,34 @@
     <message>
         <source>Force Close Taskmgr.exe</source>
         <translation>强制结束Taskmgr.exe</translation>
+    </message>
+    <message>
+        <source>Auto Remote Config Update</source>
+        <translation>自动远程配置更新</translation>
+    </message>
+    <message>
+        <source>Remote Config URL</source>
+        <translation>远程配置地址</translation>
+    </message>
+    <message>
+        <source>e.g. https://example.com/config.json</source>
+        <translation>例如：https://example.com/config.json</translation>
+    </message>
+    <message>
+        <source>Update Now</source>
+        <translation>立即更新</translation>
+    </message>
+    <message>
+        <source>Update Interval (minutes)</source>
+        <translation>更新间隔（分钟）</translation>
+    </message>
+    <message>
+        <source>Last update: %1 - %2</source>
+        <translation>上次更新：%1 - %2</translation>
+    </message>
+    <message>
+        <source>Last update: never</source>
+        <translation>上次更新：从未</translation>
     </message>
     <message>
         <source>Auto Time Sync</source>
@@ -439,6 +558,30 @@
         <source>Hide Remaining Time</source>
         <translation>隐藏剩余时间</translation>
     </message>
+    <message>
+        <source>Password Settings</source>
+        <translation>密码设置</translation>
+    </message>
+    <message>
+        <source>Enter new password (empty to disable)</source>
+        <translation>输入新密码（留空则禁用）</translation>
+    </message>
+    <message>
+        <source>Set</source>
+        <translation>设置</translation>
+    </message>
+    <message>
+        <source>Password is set</source>
+        <translation>已设置密码</translation>
+    </message>
+    <message>
+        <source>No password set</source>
+        <translation>未设置密码</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>确定</translation>
+    </message>
 </context>
 <context>
     <name>SettingsController</name>
@@ -457,6 +600,14 @@
     <message>
         <source>Invalid settings file</source>
         <translation>无效的设置文件</translation>
+    </message>
+    <message>
+        <source>Incorrect password</source>
+        <translation>密码错误</translation>
+    </message>
+    <message>
+        <source>Password Error</source>
+        <translation>密码错误</translation>
     </message>
 </context>
 <context>
@@ -500,6 +651,37 @@
     <message>
         <source>Time sync not implemented on this platform</source>
         <translation>当前平台暂不支持校时</translation>
+    </message>
+</context>
+<context>
+    <name>PasswordWindow</name>
+    <message>
+        <source>Password Verification</source>
+        <translation>密码验证</translation>
+    </message>
+    <message>
+        <source>Enter password to quit:</source>
+        <translation>输入密码以退出：</translation>
+    </message>
+    <message>
+        <source>Enter password to toggle service:</source>
+        <translation>输入密码以切换服务：</translation>
+    </message>
+    <message>
+        <source>Enter password to access settings:</source>
+        <translation>输入密码以访问设置：</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>密码</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>确定</translation>
     </message>
 </context>
 </TS>

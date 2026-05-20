@@ -22,6 +22,7 @@ class SettingsController : public QObject
     Q_PROPERTY(bool hideCurrentTime READ hideCurrentTime WRITE setHideCurrentTime NOTIFY hideCurrentTimeChanged)
     Q_PROPERTY(bool hideUnlockTime READ hideUnlockTime WRITE setHideUnlockTime NOTIFY hideUnlockTimeChanged)
     Q_PROPERTY(bool hideRemainingTime READ hideRemainingTime WRITE setHideRemainingTime NOTIFY hideRemainingTimeChanged)
+    Q_PROPERTY(QString password READ password WRITE setPassword NOTIFY passwordChanged)
 
 public:
     explicit SettingsController(QObject *parent = nullptr);
@@ -63,9 +64,13 @@ public:
     bool hideRemainingTime() const;
     Q_INVOKABLE void setHideRemainingTime(bool hide);
 
+    QString password() const;
+    Q_INVOKABLE void setPassword(const QString &newPassword);
+    Q_INVOKABLE bool verifyPassword(const QString &input) const;
+    Q_INVOKABLE void showPasswordError();
+
     Q_INVOKABLE QString exportSettings(const QString &filePath);
     Q_INVOKABLE QString importSettings(const QString &filePath);
-    Q_INVOKABLE void showMessage(const QString &title, const QString &text);
 
 signals:
     void autostartEnabledChanged(bool enabled);
@@ -82,6 +87,7 @@ signals:
     void hideCurrentTimeChanged(bool hide);
     void hideUnlockTimeChanged(bool hide);
     void hideRemainingTimeChanged(bool hide);
+    void passwordChanged(const QString &password);
     void settingsImported();
 
 private:

@@ -6,13 +6,25 @@ import QtQuick.Dialogs
 Dialog {
     id: advancedSettingsDialog
     modal: true
-    standardButtons: Dialog.Ok
+    standardButtons: Dialog.NoButton
 
     title: qsTr("Advanced Settings")
     width: 740
     height: 500
     x: (parent.width - width) / 2
     y: (parent.height - height) / 2
+
+    footer: DialogButtonBox {
+        contentItem: RowLayout {
+            spacing: 12
+            Item { Layout.fillWidth: true }
+            Button {
+                text: qsTr("OK")
+                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+                onClicked: advancedSettingsDialog.accept()
+            }
+        }
+    }
 
     // 背景模式索引：0=纯色, 1=透明, 2=自定义图片, 3=自定义视频
     property int bgModeIndex: {
@@ -196,6 +208,112 @@ Dialog {
                             .arg(TimeSyncManager.lastSyncStatus)
                         : qsTr("Last sync: never")
                     color: TimeSyncManager.lastSyncSuccess ? "#2e7d32" : palette.windowText
+                    font.pixelSize: 12
+                }
+            }
+            // ── 密码设置 ──
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: 4
+                spacing: 8
+
+                Label {
+                    text: qsTr("Password Settings")
+                    font.bold: true
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    TextField {
+                        id: passwordField
+                        Layout.fillWidth: true
+                        echoMode: TextInput.Password
+                        placeholderText: qsTr("Enter new password (empty to disable)")
+                    }
+
+                    Button {
+                        text: qsTr("OK")
+                        onClicked: {
+                            SettingsController.setPassword(passwordField.text);
+                        }
+                    }
+                }
+
+                Label {
+                    text: SettingsController.password.length > 0 ? qsTr("Password is set") : qsTr("No password set")
+                    color: SettingsController.password.length > 0 ? "#2e7d32" : palette.windowText
+                    font.pixelSize: 12
+                }
+            }
+
+            // ── 远程配置更新 ──
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: 4
+                spacing: 6
+
+                CheckBox {
+                    id: remoteConfigCheck
+                    text: qsTr("Auto Remote Config Update")
+                    checked: RemoteConfigUpdater.enabled
+                    onToggled: RemoteConfigUpdater.setEnabled(checked)
+                }
+
+                Label {
+                    text: qsTr("Remote Config URL")
+                    Layout.leftMargin: 8
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 8
+                    spacing: 6
+                    TextField {
+                        id: remoteUrlField
+                        Layout.fillWidth: true
+                        placeholderText: qsTr("e.g. https://example.com/config.json")
+                        text: RemoteConfigUpdater.remoteUrl
+                        onEditingFinished: RemoteConfigUpdater.setRemoteUrl(text)
+                    }
+                    Button {
+                        text: qsTr("Update Now")
+                        enabled: remoteConfigCheck.checked && remoteUrlField.text.length > 0
+                        onClicked: {
+                            RemoteConfigUpdater.setRemoteUrl(remoteUrlField.text);
+                            RemoteConfigUpdater.syncNow();
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 8
+                    spacing: 6
+                    Label {
+                        text: qsTr("Update Interval (minutes)")
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+                    SpinBox {
+                        id: remoteIntervalSpin
+                        from: 1
+                        to: 10080
+                        value: RemoteConfigUpdater.intervalMinutes
+                        editable: true
+                        onValueModified: RemoteConfigUpdater.setIntervalMinutes(value)
+                    }
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 8
+                    wrapMode: Text.WordWrap
+                    text: RemoteConfigUpdater.lastSyncTime.length > 0
+                        ? qsTr("Last update: %1 - %2")
+                            .arg(RemoteConfigUpdater.lastSyncTime)
+                            .arg(RemoteConfigUpdater.lastSyncStatus)
+                        : qsTr("Last update: never")
+                    color: RemoteConfigUpdater.lastSyncSuccess ? "#2e7d32" : palette.windowText
                     font.pixelSize: 12
                 }
             }
@@ -554,16 +672,19 @@ Dialog {
         fileMode: FileDialog.SaveFile
         onAccepted: {
             let path = selectedFile.toString().replace("file:///", "");
-            // Windows 路径可能以 / 开头，需处理
             if (Qt.platform.os === "windows") {
                 if (path.startsWith("/"))
                     path = path.substring(1);
             }
             let err = SettingsController.exportSettings(path);
             if (err) {
-                SettingsController.showMessage(qsTr("Export Error"), err);
+                messageDialog.dialogTitle = qsTr("Export Error");
+                messageDialog.dialogText = err;
+                messageDialog.open();
             } else {
-                SettingsController.showMessage(qsTr("Success"), qsTr("Settings exported successfully."));
+                messageDialog.dialogTitle = qsTr("Success");
+                messageDialog.dialogText = qsTr("Settings exported successfully.");
+                messageDialog.open();
             }
         }
     }
@@ -581,11 +702,48 @@ Dialog {
             }
             let err = SettingsController.importSettings(path);
             if (err) {
-                SettingsController.showMessage(qsTr("Import Error"), err);
+                messageDialog.dialogTitle = qsTr("Import Error");
+                messageDialog.dialogText = err;
+                messageDialog.open();
             } else {
                 LanguageSwitcher.reloadLanguage();
                 SettingsController.timeRuleModel.reload();
-                SettingsController.showMessage(qsTr("Success"), qsTr("Settings imported successfully."));
+                messageDialog.dialogTitle = qsTr("Success");
+                messageDialog.dialogText = qsTr("Settings imported successfully.");
+                messageDialog.open();
+            }
+        }
+    }
+
+    Dialog {
+        id: messageDialog
+        modal: true
+        standardButtons: Dialog.NoButton
+        title: dialogTitle
+        x: (parent.width - width) / 2
+        y: (parent.height - height) / 2
+        width: 360
+        height: 200
+
+        property string dialogTitle: ""
+        property string dialogText: ""
+
+        contentItem: Label {
+            text: messageDialog.dialogText
+            wrapMode: Text.WordWrap
+            font.pixelSize: 13
+            color: "#E0E0E0"
+        }
+
+        footer: DialogButtonBox {
+            contentItem: RowLayout {
+                spacing: 12
+                Item { Layout.fillWidth: true }
+                Button {
+                    text: qsTr("OK")
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+                    onClicked: messageDialog.close()
+                }
             }
         }
     }

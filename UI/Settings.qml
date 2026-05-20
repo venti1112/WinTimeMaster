@@ -15,11 +15,39 @@ ApplicationWindow {
 
     property string currentLang: LanguageSwitcher.currentLanguage
     property var timeRuleModel: SettingsController.timeRuleModel
+    signal requestShowSettings()
+    signal requestQuit()
 
     onClosing: function(close) {
         close.accepted = false;
         TrayManager.hideSettingsWindow();
         TrayManager.showTrayIcon();
+    }
+
+    function showWithPasswordCheck() {
+        if (SettingsController.password === "") {
+            settingsWindow.show();
+            settingsWindow.raise();
+            settingsWindow.requestActivate();
+        } else {
+            AuthWindow.showForAction("settings");
+        }
+    }
+
+    function quitWithPasswordCheck() {
+        if (SettingsController.password === "") {
+            Qt.quit();
+        } else {
+            AuthWindow.showForAction("quit");
+        }
+    }
+
+    function toggleServiceWithPasswordCheck() {
+        if (SettingsController.password === "") {
+            LockController.toggleChecking();
+        } else {
+            AuthWindow.showForAction("service");
+        }
     }
 
     ColumnLayout {
@@ -181,6 +209,11 @@ ApplicationWindow {
                 text: qsTr("Advanced Settings")
                 onClicked: advancedSettingsDialog.open()
             }
+
+            Button {
+                text: qsTr("About")
+                onClicked: aboutDialog.open()
+            }
         }
 
         // 对话框实例
@@ -190,6 +223,10 @@ ApplicationWindow {
         }
         AdvancedSettings {
             id: advancedSettingsDialog
+        }
+        AboutDialog {
+            id: aboutDialog
+            aboutCtrl: AboutController
         }
     }
 }

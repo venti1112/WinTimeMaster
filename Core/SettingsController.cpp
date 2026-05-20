@@ -1,5 +1,6 @@
 ﻿#include "SettingsController.h"
 #include "ConfigManager.h"
+#include "PasswordHasher.h"
 #include <QCoreApplication>
 #include <QProcess>
 #include <QFile>
@@ -205,6 +206,39 @@ void SettingsController::setHideRemainingTime(bool hide)
     emit hideRemainingTimeChanged(hide);
 }
 
+QString SettingsController::password() const
+{
+    return ConfigManager::instance()->readString("PasswordHash", QString());
+}
+void SettingsController::setPassword(const QString &newPassword)
+{
+    QString oldHash = password();
+    if (newPassword.isEmpty()) {
+        if (oldHash.isEmpty()) return;
+        ConfigManager::instance()->writeString("PasswordHash", QString());
+        emit passwordChanged(QString());
+    } else {
+        QString newHash = PasswordHasher::hashPassword(newPassword);
+        if (oldHash == newHash) return;
+        ConfigManager::instance()->writeString("PasswordHash", newHash);
+        emit passwordChanged(newHash);
+    }
+}
+
+bool SettingsController::verifyPassword(const QString &input) const
+{
+    return PasswordHasher::verifyPassword(input, password());
+}
+
+void SettingsController::showPasswordError()
+{
+    QMessageBox msgBox;
+    msgBox.setWindowTitle(tr("Password Error"));
+    msgBox.setText(tr("Incorrect password"));
+    msgBox.setIcon(QMessageBox::Warning);
+    msgBox.exec();
+}
+
 // ---------- 导出/导入 ----------
 QString SettingsController::exportSettings(const QString &filePath)
 {
@@ -243,13 +277,4 @@ QString SettingsController::importSettings(const QString &filePath)
 
     emit settingsImported();
     return {};
-}
-
-void SettingsController::showMessage(const QString &title, const QString &text)
-{
-    QMessageBox msgBox;
-    msgBox.setWindowTitle(title);
-    msgBox.setText(text);
-    msgBox.setStandardButtons(QMessageBox::Ok);
-    msgBox.exec();
 }

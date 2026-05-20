@@ -16,6 +16,9 @@
 #include "Core/TrayManager.h"
 #include "Core/LockController.h"
 #include "Core/TimeSyncManager.h"
+#include "Core/AboutController.h"
+#include "Core/UpdateChecker.h"
+#include "Core/RemoteConfigUpdater.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -114,6 +117,16 @@ int main(int argc, char *argv[])
     LockController *lockCtrl = new LockController(settingsCtrl->timeRuleModel(), &engine, &engine);
     engine.rootContext()->setContextProperty("LockController", lockCtrl);
 
+    AboutController *aboutCtrl = new AboutController(&engine);
+    engine.rootContext()->setContextProperty("AboutController", aboutCtrl);
+
+    UpdateChecker *updateChecker = new UpdateChecker(&engine);
+    engine.rootContext()->setContextProperty("UpdateChecker", updateChecker);
+
+    RemoteConfigUpdater *remoteConfigUpdater = new RemoteConfigUpdater(&engine);
+    engine.rootContext()->setContextProperty("RemoteConfigUpdater", remoteConfigUpdater);
+    remoteConfigUpdater->reloadFromConfig();
+
     TrayManager *trayManager = new TrayManager(&engine, &engine);
     engine.rootContext()->setContextProperty("TrayManager", trayManager);
     trayManager->setLockController(lockCtrl);
@@ -129,6 +142,21 @@ int main(int argc, char *argv[])
         Qt::QueuedConnection);
 
     engine.loadFromModule("WinTimeMaster", "Settings");
+    engine.loadFromModule("WinTimeMaster", "PasswordWindow");
+
+    QObject *settingsWindow = nullptr;
+    QObject *passwordWindow = nullptr;
+    for (QObject *obj : engine.rootObjects()) {
+        if (obj->objectName() == "passwordWindow") {
+            passwordWindow = obj;
+        } else if (obj->objectName().isEmpty() && !settingsWindow) {
+            settingsWindow = obj;
+        }
+    }
+    if (settingsWindow)
+        engine.rootContext()->setContextProperty("SettingsWindow", settingsWindow);
+    if (passwordWindow)
+        engine.rootContext()->setContextProperty("AuthWindow", passwordWindow);
 
     if (!startMinimized) {
         trayManager->showSettingsWindow();
