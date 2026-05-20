@@ -52,7 +52,6 @@ qt_add_qml_module(WinTimeMaster
         UI/Settings.qml
         UI/RuleEditor.qml
         UI/LockScreen.qml
-        UI/PasswordDialog.qml
         UI/AdvancedSettings.qml
     SOURCES
         Core/LanguageManager.h
