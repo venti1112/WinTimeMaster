@@ -272,6 +272,34 @@
         <source>Remaining: </source>
         <translation>剩餘時間：</translation>
     </message>
+    <message>
+        <source>Emergency Exit (%1/%2)</source>
+        <translation>緊急退出 (%1/%2)</translation>
+    </message>
+    <message>
+        <source>Emergency Exit</source>
+        <translation>緊急退出</translation>
+    </message>
+    <message>
+        <source>Enter password to exit:</source>
+        <translation>輸入密碼以退出：</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>密碼</translation>
+    </message>
+    <message>
+        <source>Incorrect password</source>
+        <translation>密碼不正確</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>確定</translation>
+    </message>
 </context>
 <context>
     <name>TrayManager</name>
@@ -581,6 +609,14 @@
     <message>
         <source>OK</source>
         <translation>確定</translation>
+    </message>
+    <message>
+        <source>Enable Emergency Exit</source>
+        <translation>啟用緊急退出</translation>
+    </message>
+    <message>
+        <source>Click count:</source>
+        <translation>點擊次數：</translation>
     </message>
 </context>
 <context>

@@ -272,6 +272,34 @@
         <source>Remaining: </source>
         <translation>残り時間：</translation>
     </message>
+    <message>
+        <source>Emergency Exit (%1/%2)</source>
+        <translation>緊急終了 (%1/%2)</translation>
+    </message>
+    <message>
+        <source>Emergency Exit</source>
+        <translation>緊急終了</translation>
+    </message>
+    <message>
+        <source>Enter password to exit:</source>
+        <translation>終了するにはパスワードを入力：</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>パスワード</translation>
+    </message>
+    <message>
+        <source>Incorrect password</source>
+        <translation>パスワードが正しくありません</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>キャンセル</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
 </context>
 <context>
     <name>TrayManager</name>
@@ -581,6 +609,14 @@
     <message>
         <source>OK</source>
         <translation>OK</translation>
+    </message>
+    <message>
+        <source>Enable Emergency Exit</source>
+        <translation>緊急終了を有効にする</translation>
+    </message>
+    <message>
+        <source>Click count:</source>
+        <translation>クリック回数：</translation>
     </message>
 </context>
 <context>

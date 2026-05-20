@@ -142,6 +142,33 @@ Dialog {
                 onToggled: SettingsController.setKillTaskmgr(checked)
             }
 
+            // ── 紧急退出 ──
+            CheckBox {
+                id: emergencyExitCheck
+                text: qsTr("Enable Emergency Exit")
+                checked: SettingsController.emergencyExitEnabled
+                onToggled: SettingsController.setEmergencyExitEnabled(checked)
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: 24
+                spacing: 6
+                enabled: emergencyExitCheck.checked
+                opacity: enabled ? 1.0 : 0.4
+                Label {
+                    text: qsTr("Click count:")
+                    Layout.alignment: Qt.AlignVCenter
+                }
+                SpinBox {
+                    id: exitClickSpin
+                    from: 1
+                    to: 99
+                    value: SettingsController.emergencyExitClickCount
+                    editable: true
+                    onValueModified: SettingsController.setEmergencyExitClickCount(value)
+                }
+            }
+
             // ── 自动校时设置 ──
             ColumnLayout {
                 Layout.fillWidth: true

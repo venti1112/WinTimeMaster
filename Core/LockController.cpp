@@ -46,12 +46,66 @@ LockController::LockController(TimeRuleModel *model, QQmlApplicationEngine *engi
     }
 }
 
-// ---------- 系统限制 ----------
+// ---------- 键盘钩子（只锁键盘，不锁鼠标）----------
+#ifdef Q_OS_WIN
+static LockController *g_hookController = nullptr;
+
+LRESULT CALLBACK LockController::keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    if (nCode == HC_ACTION)
+        return 1; // 拦截所有键盘消息
+    return CallNextHookEx(nullptr, nCode, wParam, lParam);
+}
+#endif
+
+void LockController::beginEmergencyPassword()
+{
+    m_emergencyPasswordActive = true;
+    blockInput(false);
+}
+
+void LockController::cancelEmergencyPassword()
+{
+    m_emergencyPasswordActive = false;
+    if (m_checking)
+        applySystemRestrictions();
+}
+
 void LockController::blockInput(bool block)
 {
 #ifdef Q_OS_WIN
-    ::BlockInput(block ? TRUE : FALSE);
+    if (block && m_emergencyPasswordActive)
+        return;
+    if (block) {
+        if (!m_keyboardHook) {
+            g_hookController = this;
+            m_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboardHookProc,
+                                              GetModuleHandle(nullptr), 0);
+        }
+    } else {
+        if (m_keyboardHook) {
+            UnhookWindowsHookEx(m_keyboardHook);
+            m_keyboardHook = nullptr;
+            g_hookController = nullptr;
+        }
+    }
 #endif
+}
+
+LockController::~LockController()
+{
+    blockInput(false);
+}
+
+void LockController::emergencyExit()
+{
+    m_timer->stop();
+    m_checking = false;
+    blockInput(false);
+    disableTaskManager(false);
+    if (m_lockWindow)
+        m_lockWindow->hide();
+    QTimer::singleShot(0, QCoreApplication::instance(), &QCoreApplication::quit);
 }
 
 void LockController::disableTaskManager(bool disable)
@@ -243,6 +297,10 @@ void LockController::checkLockRules()
                                   cfgInst->readBool("HideUnlockTime", false));
         m_lockWindow->setProperty("hideRemainingTime",
                                   cfgInst->readBool("HideRemainingTime", false));
+        m_lockWindow->setProperty("emergencyExitEnabled",
+                                  cfgInst->readBool("EmergencyExitEnabled", false));
+        m_lockWindow->setProperty("emergencyExitClickCount",
+                                  cfgInst->readInt("EmergencyExitClickCount", 3));
 
         applySystemRestrictions();
 

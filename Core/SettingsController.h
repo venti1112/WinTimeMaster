@@ -22,6 +22,8 @@ class SettingsController : public QObject
     Q_PROPERTY(bool hideCurrentTime READ hideCurrentTime WRITE setHideCurrentTime NOTIFY hideCurrentTimeChanged)
     Q_PROPERTY(bool hideUnlockTime READ hideUnlockTime WRITE setHideUnlockTime NOTIFY hideUnlockTimeChanged)
     Q_PROPERTY(bool hideRemainingTime READ hideRemainingTime WRITE setHideRemainingTime NOTIFY hideRemainingTimeChanged)
+    Q_PROPERTY(bool emergencyExitEnabled READ isEmergencyExitEnabled WRITE setEmergencyExitEnabled NOTIFY emergencyExitEnabledChanged)
+    Q_PROPERTY(int emergencyExitClickCount READ emergencyExitClickCount WRITE setEmergencyExitClickCount NOTIFY emergencyExitClickCountChanged)
     Q_PROPERTY(QString password READ password WRITE setPassword NOTIFY passwordChanged)
 
 public:
@@ -64,6 +66,11 @@ public:
     bool hideRemainingTime() const;
     Q_INVOKABLE void setHideRemainingTime(bool hide);
 
+    bool isEmergencyExitEnabled() const;
+    Q_INVOKABLE void setEmergencyExitEnabled(bool enabled);
+    int emergencyExitClickCount() const;
+    Q_INVOKABLE void setEmergencyExitClickCount(int count);
+
     QString password() const;
     Q_INVOKABLE void setPassword(const QString &newPassword);
     Q_INVOKABLE bool verifyPassword(const QString &input) const;
@@ -87,6 +94,8 @@ signals:
     void hideCurrentTimeChanged(bool hide);
     void hideUnlockTimeChanged(bool hide);
     void hideRemainingTimeChanged(bool hide);
+    void emergencyExitEnabledChanged(bool enabled);
+    void emergencyExitClickCountChanged(int count);
     void passwordChanged(const QString &password);
     void settingsImported();
 

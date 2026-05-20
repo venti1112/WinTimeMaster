@@ -206,6 +206,28 @@ void SettingsController::setHideRemainingTime(bool hide)
     emit hideRemainingTimeChanged(hide);
 }
 
+bool SettingsController::isEmergencyExitEnabled() const
+{
+    return ConfigManager::instance()->readBool("EmergencyExitEnabled", false);
+}
+void SettingsController::setEmergencyExitEnabled(bool enabled)
+{
+    if (isEmergencyExitEnabled() == enabled) return;
+    ConfigManager::instance()->writeBool("EmergencyExitEnabled", enabled);
+    emit emergencyExitEnabledChanged(enabled);
+}
+
+int SettingsController::emergencyExitClickCount() const
+{
+    return ConfigManager::instance()->readInt("EmergencyExitClickCount", 3);
+}
+void SettingsController::setEmergencyExitClickCount(int count)
+{
+    if (emergencyExitClickCount() == count) return;
+    ConfigManager::instance()->writeInt("EmergencyExitClickCount", count);
+    emit emergencyExitClickCountChanged(count);
+}
+
 QString SettingsController::password() const
 {
     return ConfigManager::instance()->readString("PasswordHash", QString());

@@ -7,6 +7,10 @@
 #include <QPair>
 #include <QQmlApplicationEngine>
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
 class TimeRuleModel;
 class QQuickWindow;
 
@@ -18,9 +22,12 @@ class LockController : public QObject
 public:
     explicit LockController(TimeRuleModel *model, QQmlApplicationEngine *engine,
                             QObject *parent = nullptr);
-    ~LockController() override = default;
+    ~LockController() override;
 
     bool isChecking() const;
+    Q_INVOKABLE void emergencyExit();
+    Q_INVOKABLE void beginEmergencyPassword();
+    Q_INVOKABLE void cancelEmergencyPassword();
 
 public slots:
     void startChecking();
@@ -40,11 +47,17 @@ private:
     void blockInput(bool block);
     void disableTaskManager(bool disable);
 
+    static LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam);
+
     TimeRuleModel *m_model = nullptr;
     QQuickWindow *m_lockWindow = nullptr;
     QTimer *m_timer = nullptr;
     bool m_checking = false;
+    bool m_emergencyPasswordActive = false;
     QQmlApplicationEngine *m_engine = nullptr;
+#ifdef Q_OS_WIN
+    HHOOK m_keyboardHook = nullptr;
+#endif
 };
 
 #endif // LOCKCONTROLLER_H

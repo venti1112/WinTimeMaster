@@ -67,6 +67,10 @@ int main(int argc, char *argv[])
 
     // ----- 单实例检测 -----
     QSharedMemory sharedMem("Global\\WinTimeMaster_SingleInstance");
+    // 清理上次可能残留的共享内存段
+    if (sharedMem.attach()) {
+        sharedMem.detach();
+    }
     if (!sharedMem.create(1)) {
         // 已有实例运行，通过 IPC 通知旧实例显示窗口
         QLocalSocket socket;

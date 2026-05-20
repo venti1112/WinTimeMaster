@@ -272,6 +272,34 @@
         <source>Remaining: </source>
         <translation>남은 시간: </translation>
     </message>
+    <message>
+        <source>Emergency Exit (%1/%2)</source>
+        <translation>비상 종료 (%1/%2)</translation>
+    </message>
+    <message>
+        <source>Emergency Exit</source>
+        <translation>비상 종료</translation>
+    </message>
+    <message>
+        <source>Enter password to exit:</source>
+        <translation>종료하려면 비밀번호 입력：</translation>
+    </message>
+    <message>
+        <source>Password</source>
+        <translation>비밀번호</translation>
+    </message>
+    <message>
+        <source>Incorrect password</source>
+        <translation>비밀번호가 올바르지 않습니다</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>확인</translation>
+    </message>
 </context>
 <context>
     <name>TrayManager</name>
@@ -581,6 +609,14 @@
     <message>
         <source>OK</source>
         <translation>확인</translation>
+    </message>
+    <message>
+        <source>Enable Emergency Exit</source>
+        <translation>비상 종료 활성화</translation>
+    </message>
+    <message>
+        <source>Click count:</source>
+        <translation>클릭 횟수：</translation>
     </message>
 </context>
 <context>

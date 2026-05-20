@@ -29,8 +29,12 @@ Window {
     property bool hideCurrentTime: false
     property bool hideUnlockTime: false
     property bool hideRemainingTime: false
+    property bool emergencyExitEnabled: false
+    property int emergencyExitClickCount: 3
 
-    // 类型判断 - 清理尾部空格
+    property int _emergencyClickCount: 0
+    property bool _showEmergencyPassword: false
+
     property bool isTransparent: backgroundImage === "transparent"
     property bool isSolidColor: backgroundImage.startsWith("#") && backgroundImage.length >= 7
     property bool isImage: {
@@ -180,7 +184,168 @@ Window {
     }
 
     // ===== 播放控制 =====
+    Rectangle {
+        id: emergencyExitBtn
+        z: 2
+        visible: emergencyExitEnabled && !_showEmergencyPassword && lockScreenWindow.visible
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 40
+        width: 260
+        height: 44
+        radius: 8
+        color: "#66FF0000"
+        border.color: "#99FFFFFF"
+        border.width: 1
+
+        Text {
+            anchors.centerIn: parent
+            text: _emergencyClickCount > 0
+                ? qsTr("Emergency Exit (%1/%2)").arg(_emergencyClickCount).arg(emergencyExitClickCount)
+                : qsTr("Emergency Exit")
+            color: "white"
+            font.pixelSize: 16
+            font.bold: true
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            onEntered: parent.color = "#99FF0000"
+            onExited: parent.color = "#66FF0000"
+            onClicked: {
+                _emergencyClickCount++
+                if (_emergencyClickCount >= emergencyExitClickCount) {
+                    if (SettingsController.password.length > 0) {
+                        LockController.beginEmergencyPassword()
+                        _showEmergencyPassword = true
+                        emergencyPwdField.forceActiveFocus()
+                    } else {
+                        LockController.emergencyExit()
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        id: emergencyPwdOverlay
+        z: 3
+        visible: _showEmergencyPassword
+        anchors.fill: parent
+        color: "#CC000000"
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            spacing: 16
+            width: 360
+
+            Label {
+                text: qsTr("Enter password to exit:")
+                color: "white"
+                font.pixelSize: 24
+                font.bold: true
+                Layout.alignment: Qt.AlignHCenter
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                height: 40
+                radius: 4
+                color: "#333333"
+                clip: true
+                TextInput {
+                    id: emergencyPwdField
+                    anchors.fill: parent
+                    anchors.leftMargin: 8
+                    anchors.rightMargin: 8
+                    verticalAlignment: TextInput.AlignVCenter
+                    echoMode: TextInput.Password
+                    color: "white"
+                    font.pixelSize: 16
+                    focus: true
+                    onAccepted: verifyEmergencyExit()
+                }
+                Text {
+                    anchors.fill: parent
+                    anchors.leftMargin: 8
+                    verticalAlignment: Text.AlignVCenter
+                    text: qsTr("Password")
+                    color: "#888888"
+                    font.pixelSize: 16
+                    visible: emergencyPwdField.text.length === 0
+                }
+            }
+
+            Row {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 16
+                Rectangle {
+                    width: cancelBtnText.implicitWidth + 32
+                    height: 36
+                    radius: 4
+                    color: "#555555"
+                    Text {
+                        id: cancelBtnText
+                        anchors.centerIn: parent
+                        text: qsTr("Cancel")
+                        color: "white"
+                        font.pixelSize: 15
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                    onClicked: {
+                        LockController.cancelEmergencyPassword()
+                        _showEmergencyPassword = false
+                        _emergencyClickCount = 0
+                    }
+                    }
+                }
+                Rectangle {
+                    width: okBtnText.implicitWidth + 32
+                    height: 36
+                    radius: 4
+                    color: "#4CAF50"
+                    Text {
+                        id: okBtnText
+                        anchors.centerIn: parent
+                        text: qsTr("OK")
+                        color: "white"
+                        font.pixelSize: 15
+                        font.bold: true
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: verifyEmergencyExit()
+                    }
+                }
+            }
+
+            Text {
+                id: emergencyPwdError
+                visible: false
+                text: qsTr("Incorrect password")
+                color: "#FF4444"
+                font.pixelSize: 14
+                horizontalAlignment: Text.AlignHCenter
+                Layout.alignment: Qt.AlignHCenter
+            }
+        }
+    }
+
+    function verifyEmergencyExit() {
+        if (SettingsController.verifyPassword(emergencyPwdField.text)) {
+            LockController.emergencyExit()
+        } else {
+            emergencyPwdError.visible = true
+            emergencyPwdField.text = ""
+            emergencyPwdField.forceActiveFocus()
+        }
+    }
+
     onVisibleChanged: {
+        _emergencyClickCount = 0
+        _showEmergencyPassword = false
         if (visible && isVideo && mediaPlayer.source !== "") {
             if (mediaPlayer.playbackState !== MediaPlayer.PlayingState)
                 mediaPlayer.play()
