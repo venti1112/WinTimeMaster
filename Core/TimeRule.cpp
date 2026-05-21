@@ -26,6 +26,10 @@ bool TimeRule::enabled() const {
     return m_enabled;
 }
 
+QDate TimeRule::onceDate() const {
+    return m_onceDate;
+}
+
 void TimeRule::setStartTime(const QTime &time) {
     if (m_startTime != time) {
         m_startTime = time;
@@ -43,6 +47,10 @@ void TimeRule::setEndTime(const QTime &time) {
 void TimeRule::setRepeatMode(RepeatMode mode) {
     if (m_repeatMode != mode) {
         m_repeatMode = mode;
+        if (m_enabled && mode == Once && m_onceDate.isValid()) {
+            m_onceDate = QDate();
+            emit onceDateChanged();
+        }
         emit repeatModeChanged();
     }
 }
@@ -57,6 +65,17 @@ void TimeRule::setWeekDays(int days) {
 void TimeRule::setEnabled(bool enabled) {
     if (m_enabled != enabled) {
         m_enabled = enabled;
+        if (enabled && m_repeatMode == Once && m_onceDate.isValid()) {
+            m_onceDate = QDate();
+            emit onceDateChanged();
+        }
         emit enabledChanged();
+    }
+}
+
+void TimeRule::setOnceDate(const QDate &date) {
+    if (m_onceDate != date) {
+        m_onceDate = date;
+        emit onceDateChanged();
     }
 }

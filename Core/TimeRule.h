@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QTime>
+#include <QDate>
 #include <QString>
 
 class TimeRule : public QObject {
@@ -14,6 +15,7 @@ class TimeRule : public QObject {
     Q_PROPERTY(RepeatMode repeatMode READ repeatMode WRITE setRepeatMode NOTIFY repeatModeChanged)
     Q_PROPERTY(int weekDays READ weekDays WRITE setWeekDays NOTIFY weekDaysChanged)
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
+    Q_PROPERTY(QDate onceDate READ onceDate WRITE setOnceDate NOTIFY onceDateChanged)
 
 public:
     enum RepeatMode {
@@ -31,12 +33,14 @@ public:
     RepeatMode repeatMode() const;
     int weekDays() const;
     bool enabled() const;
+    QDate onceDate() const;
 
     void setStartTime(const QTime &time);
     void setEndTime(const QTime &time);
     void setRepeatMode(RepeatMode mode);
     void setWeekDays(int days);
     void setEnabled(bool enabled);
+    void setOnceDate(const QDate &date);
 
 signals:
     void startTimeChanged();
@@ -44,6 +48,7 @@ signals:
     void repeatModeChanged();
     void weekDaysChanged();
     void enabledChanged();
+    void onceDateChanged();
 
 private:
     int m_id;
@@ -52,6 +57,7 @@ private:
     RepeatMode m_repeatMode = Daily;
     int m_weekDays = 0;
     bool m_enabled = true;
+    QDate m_onceDate;
 };
 
 #endif // TIMERULE_H

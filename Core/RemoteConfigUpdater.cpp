@@ -24,6 +24,7 @@ bool RemoteConfigUpdater::isEnabled() const {
 void RemoteConfigUpdater::setEnabled(bool enabled) {
     if (m_enabled == enabled) return;
     m_enabled = enabled;
+    ConfigManager::instance()->writeBool("RemoteConfigEnabled", enabled);
     emit enabledChanged(enabled);
     rescheduleTimer();
 }
@@ -64,12 +65,18 @@ bool RemoteConfigUpdater::lastSyncSuccess() const {
 }
 
 void RemoteConfigUpdater::reloadFromConfig() {
+    bool oldEnabled = m_enabled;
+    QString oldUrl = m_remoteUrl;
+    int oldInterval = m_intervalMinutes;
+
     m_enabled = ConfigManager::instance()->readBool("RemoteConfigEnabled", false);
     m_remoteUrl = ConfigManager::instance()->readString("RemoteConfigUrl", QString());
     m_intervalMinutes = ConfigManager::instance()->readInt("RemoteConfigIntervalMinutes", 60);
-    emit enabledChanged(m_enabled);
-    emit remoteUrlChanged(m_remoteUrl);
-    emit intervalMinutesChanged(m_intervalMinutes);
+
+    if (oldEnabled != m_enabled) emit enabledChanged(m_enabled);
+    if (oldUrl != m_remoteUrl) emit remoteUrlChanged(m_remoteUrl);
+    if (oldInterval != m_intervalMinutes) emit intervalMinutesChanged(m_intervalMinutes);
+
     rescheduleTimer();
 }
 
@@ -119,7 +126,8 @@ void RemoteConfigUpdater::onReplyFinished(QNetworkReply *reply) {
         else if (value.isArray()) cfg->writeJsonArray(key, value.toArray());
     }
 
-    cfg->saveToFile();
+    // 远端可能改了 RemoteConfigEnabled / RemoteConfigUrl / RemoteConfigIntervalMinutes —— 立刻应用到自身
+    reloadFromConfig();
     recordResult(true, tr("Config updated successfully"));
     emit configUpdated();
 }

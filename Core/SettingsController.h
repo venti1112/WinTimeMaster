@@ -12,6 +12,7 @@ class SettingsController : public QObject {
     Q_PROPERTY(bool enableInputBlock READ isEnableInputBlock WRITE setEnableInputBlock NOTIFY enableInputBlockChanged)
     Q_PROPERTY(bool killTaskmgr READ isKillTaskmgr WRITE setKillTaskmgr NOTIFY killTaskmgrChanged)
     Q_PROPERTY(QString lockScreenBackground READ lockScreenBackground WRITE setLockScreenBackground NOTIFY lockScreenBackgroundChanged)
+    Q_PROPERTY(bool lockBackgroundVideoSound READ lockBackgroundVideoSound WRITE setLockBackgroundVideoSound NOTIFY lockBackgroundVideoSoundChanged)
     Q_PROPERTY(QString lockPromptColor READ lockPromptColor WRITE setLockPromptColor NOTIFY lockPromptColorChanged)
     Q_PROPERTY(QString lockCurrentTimeColor READ lockCurrentTimeColor WRITE setLockCurrentTimeColor NOTIFY lockCurrentTimeColorChanged)
     Q_PROPERTY(QString lockUnlockTimeColor READ lockUnlockTimeColor WRITE setLockUnlockTimeColor NOTIFY lockUnlockTimeColorChanged)
@@ -42,6 +43,8 @@ public:
     Q_INVOKABLE void setKillTaskmgr(bool kill);
     QString lockScreenBackground() const;
     Q_INVOKABLE void setLockScreenBackground(const QString &background);
+    bool lockBackgroundVideoSound() const;
+    Q_INVOKABLE void setLockBackgroundVideoSound(bool enabled);
 
     QString lockPromptColor() const;
     Q_INVOKABLE void setLockPromptColor(const QString &color);
@@ -84,6 +87,7 @@ signals:
     void enableInputBlockChanged(bool enable);
     void killTaskmgrChanged(bool kill);
     void lockScreenBackgroundChanged(const QString &background);
+    void lockBackgroundVideoSoundChanged(bool enabled);
     void lockPromptColorChanged(const QString &color);
     void lockCurrentTimeColorChanged(const QString &color);
     void lockUnlockTimeColorChanged(const QString &color);

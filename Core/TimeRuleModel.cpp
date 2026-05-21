@@ -63,6 +63,12 @@ void TimeRuleModel::addRule() {
     m_rules.append(rule);
     endInsertRows();
 
+    connectRuleSignals(rule);
+
+    saveRules();
+}
+
+void TimeRuleModel::connectRuleSignals(TimeRule *rule) {
     connect(rule, &TimeRule::startTimeChanged, this, [this, rule]() {
         int row = m_rules.indexOf(rule);
         if (row >= 0) emit dataChanged(index(row), index(row), {StartTimeRole});
@@ -82,9 +88,11 @@ void TimeRuleModel::addRule() {
     connect(rule, &TimeRule::enabledChanged, this, [this, rule]() {
         int row = m_rules.indexOf(rule);
         if (row >= 0) emit dataChanged(index(row), index(row), {EnabledRole});
+        saveRules();
     });
-
-    saveRules();
+    connect(rule, &TimeRule::onceDateChanged, this, [this]() {
+        saveRules();
+    });
 }
 
 void TimeRuleModel::updateRule(int row, const QVariantMap &data) {
@@ -134,20 +142,20 @@ void TimeRuleModel::loadRules() {
         rule->setWeekDays(obj["weekDays"].toInt());
         rule->setEnabled(obj["enabled"].toBool(true));
 
-        beginInsertRows(QModelIndex(), m_rules.size(), m_rules.size());
+        // onceDate 必须在 setEnabled / setRepeatMode 之后还原，避免被切到 Once 的副作用清空
+        const QString onceDateStr = obj["onceDate"].toString();
+        if (!onceDateStr.isEmpty()) {
+            QDate d = QDate::fromString(onceDateStr, "yyyy-MM-dd");
+            if (d.isValid()) rule->setOnceDate(d);
+        }
+
         m_rules.append(rule);
-        endInsertRows();
 
         if (rule->id() >= m_nextId) m_nextId = rule->id() + 1;
 
-        // 连接信号
-        connect(rule, &TimeRule::startTimeChanged, this, [this, rule]() {
-            int row = m_rules.indexOf(rule);
-            if (row >= 0) emit dataChanged(index(row), index(row), {StartTimeRole});
-        });
-        // 其余属性连接同上，为简洁此处省略，实际应添加全部
+        connectRuleSignals(rule);
     }
-    qDebug() << "Loaded" << m_rules.size() << "time rules.";
+    qInfo() << "Loaded" << m_rules.size() << "time rules.";
 }
 
 void TimeRuleModel::saveRules() {
@@ -160,11 +168,13 @@ void TimeRuleModel::saveRules() {
         obj["repeatMode"] = rule->repeatMode();
         obj["weekDays"]   = rule->weekDays();
         obj["enabled"]    = rule->enabled();
+        if (rule->onceDate().isValid())
+            obj["onceDate"] = rule->onceDate().toString("yyyy-MM-dd");
         arr.append(obj);
     }
 
     ConfigManager::instance()->writeJsonArray("TimeRules", arr);
-    qDebug() << "Saved" << arr.size() << "time rules.";
+    qInfo() << "Saved" << arr.size() << "time rules.";
 }
 
 int TimeRuleModel::nextRuleId() {
@@ -174,6 +184,6 @@ void TimeRuleModel::reload() {
     beginResetModel();
     qDeleteAll(m_rules);
     m_rules.clear();
-    endResetModel();
     loadRules();
+    endResetModel();
 }

@@ -1,4 +1,4 @@
-﻿#include "TimeSyncManager.h"
+#include "TimeSyncManager.h"
 #include "ConfigManager.h"
 
 #include <QTimer>
@@ -6,13 +6,13 @@
 #include <QHostInfo>
 #include <QHostAddress>
 #include <QDateTime>
-#include <QEventLoop>
 #include <QDebug>
 #include <windows.h>
 
 namespace {
 constexpr int kDefaultIntervalMinutes = 60;
 constexpr int kMinIntervalMinutes = 1;
+constexpr int kStageTimeoutMs = 5000;
 const char *kDefaultServer = "time.windows.com";
 constexpr quint64 kNtpUnixOffsetSeconds = 2208988800ULL;
 }
@@ -22,14 +22,24 @@ TimeSyncManager::TimeSyncManager(QObject *parent) : QObject(parent) {
     m_timer->setSingleShot(false);
     connect(m_timer, &QTimer::timeout, this, [this]() { syncNow(); });
 
+    m_stageTimer = new QTimer(this);
+    m_stageTimer->setSingleShot(true);
+    connect(m_stageTimer, &QTimer::timeout, this, &TimeSyncManager::onStageTimeout);
+
     reloadFromConfig();
 }
 
-TimeSyncManager::~TimeSyncManager() = default;
+TimeSyncManager::~TimeSyncManager() {
+    resetPipeline();
+}
 
 void TimeSyncManager::reloadFromConfig() {
     ConfigManager *cfg = ConfigManager::instance();
     if (!cfg) return;
+
+    bool oldEnabled = m_enabled;
+    QString oldServer = m_server;
+    int oldInterval = m_intervalMinutes;
 
     m_enabled = cfg->readBool("AutoTimeSync", false);
     m_server = cfg->readString("TimeSyncServer", QString::fromLatin1(kDefaultServer));
@@ -37,9 +47,9 @@ void TimeSyncManager::reloadFromConfig() {
     m_intervalMinutes = cfg->readInt("TimeSyncIntervalMinutes", kDefaultIntervalMinutes);
     if (m_intervalMinutes < kMinIntervalMinutes)  m_intervalMinutes = kMinIntervalMinutes;
 
-    emit enabledChanged(m_enabled);
-    emit serverChanged(m_server);
-    emit intervalMinutesChanged(m_intervalMinutes);
+    if (oldEnabled != m_enabled) emit enabledChanged(m_enabled);
+    if (oldServer != m_server) emit serverChanged(m_server);
+    if (oldInterval != m_intervalMinutes) emit intervalMinutesChanged(m_intervalMinutes);
 
     rescheduleTimer();
 
@@ -91,6 +101,7 @@ void TimeSyncManager::setIntervalMinutes(int minutes) {
 QString TimeSyncManager::lastSyncStatus() const { return m_lastStatus; }
 QString TimeSyncManager::lastSyncTime() const { return m_lastTime; }
 bool TimeSyncManager::lastSyncSuccess() const { return m_lastSuccess; }
+bool TimeSyncManager::isSyncing() const { return m_syncing; }
 
 void TimeSyncManager::rescheduleTimer() {
     if (!m_timer) return;
@@ -110,66 +121,141 @@ void TimeSyncManager::recordResult(bool success, const QString &message) {
     emit lastSyncResult();
 }
 
-bool TimeSyncManager::syncNow() {
-    QString errorMsg;
-    bool ok = fetchAndApplyNtp(m_server, &errorMsg);
-    if (ok) recordResult(true, tr("Time synchronized successfully"));
-    else {
-        qWarning() << "Time sync failed:" << errorMsg;
-        recordResult(false, errorMsg);
-    }
-    return ok;
+void TimeSyncManager::startStageTimeout(int ms) {
+    m_stageTimer->start(ms);
 }
 
-bool TimeSyncManager::fetchAndApplyNtp(const QString &server, QString *errorOut) {
+void TimeSyncManager::resetPipeline() {
+    m_stageTimer->stop();
+    if (m_lookupId != -1) {
+        QHostInfo::abortHostLookup(m_lookupId);
+        m_lookupId = -1;
+    }
+    if (m_socket) {
+        m_socket->disconnect(this);
+        m_socket->deleteLater();
+        m_socket = nullptr;
+    }
+    m_targetAddress.clear();
+}
+
+void TimeSyncManager::finishWithError(const QString &message) {
+    qWarning() << "Time sync failed:" << message;
+    resetPipeline();
+    if (m_syncing) {
+        m_syncing = false;
+        emit syncingChanged(false);
+    }
+    recordResult(false, message);
+}
+
+void TimeSyncManager::finishWithSuccess() {
+    resetPipeline();
+    if (m_syncing) {
+        m_syncing = false;
+        emit syncingChanged(false);
+    }
+    recordResult(true, tr("Time synchronized successfully"));
+}
+
+void TimeSyncManager::onStageTimeout() {
+    finishWithError(tr("NTP request timed out"));
+}
+
+bool TimeSyncManager::syncNow() {
+    if (m_syncing) return false;
+
+    if (m_server.trimmed().isEmpty()) {
+        recordResult(false, tr("Server address is empty"));
+        return false;
+    }
+
+    m_syncing = true;
+    emit syncingChanged(true);
+
+    m_lookupId = QHostInfo::lookupHost(m_server, this, &TimeSyncManager::onHostLookupFinished);
+    startStageTimeout(kStageTimeoutMs);
+    return true;
+}
+
+void TimeSyncManager::onHostLookupFinished(const QHostInfo &hostInfo) {
+    m_lookupId = -1;
+    m_stageTimer->stop();
+
+    if (!m_syncing) return;
+
+    if (hostInfo.error() != QHostInfo::NoError || hostInfo.addresses().isEmpty()) {
+        finishWithError(tr("Failed to resolve server: %1").arg(hostInfo.errorString()));
+        return;
+    }
+
+    m_targetAddress = QHostAddress();
+    for (const QHostAddress &addr : hostInfo.addresses()) {
+        if (addr.protocol() == QAbstractSocket::IPv4Protocol) {
+            m_targetAddress = addr;
+            break;
+        }
+    }
+    if (m_targetAddress.isNull()) m_targetAddress = hostInfo.addresses().first();
+
+    m_socket = new QUdpSocket(this);
+    connect(m_socket, &QUdpSocket::readyRead, this, &TimeSyncManager::onSocketReadyRead);
+
+    QByteArray request(48, 0);
+    request[0] = 0x1B;
+    qint64 sent = m_socket->writeDatagram(request, m_targetAddress, 123);
+    if (sent != request.size()) {
+        finishWithError(tr("Failed to send NTP request: %1").arg(m_socket->errorString()));
+        return;
+    }
+
+    startStageTimeout(kStageTimeoutMs);
+}
+
+void TimeSyncManager::onSocketReadyRead() {
+    if (!m_socket) return;
+    m_stageTimer->stop();
+
+    QByteArray response(48, 0);
+    qint64 received = m_socket->readDatagram(response.data(), response.size());
+    if (received < 48) {
+        finishWithError(tr("Invalid NTP response"));
+        return;
+    }
+
+    QString err;
+    if (!applyNtpResponse(response, &err)) {
+        finishWithError(err);
+        return;
+    }
+
+    finishWithSuccess();
+}
+
+bool TimeSyncManager::applyNtpResponse(const QByteArray &response, QString *errorOut) {
     auto setError = [&](const QString &msg) {
         if (errorOut) *errorOut = msg;
     };
 
-    if (server.trimmed().isEmpty()) {
-        setError(tr("Server address is empty"));
-        return false;
-    }
-
-    QHostInfo hostInfo = QHostInfo::fromName(server);
-    if (hostInfo.error() != QHostInfo::NoError || hostInfo.addresses().isEmpty()) {
-        setError(tr("Failed to resolve server: %1").arg(hostInfo.errorString()));
-        return false;
-    }
-    QHostAddress address;
-    for (const QHostAddress &addr : hostInfo.addresses()) {
-        if (addr.protocol() == QAbstractSocket::IPv4Protocol) {
-            address = addr;
-            break;
-        }
-    }
-    if (address.isNull()) address = hostInfo.addresses().first();
-
-    QUdpSocket socket;
-    QByteArray request(48, 0);
-    request[0] = 0x1B;
-
-    qint64 sent = socket.writeDatagram(request, address, 123);
-    if (sent != request.size()) {
-        setError(tr("Failed to send NTP request: %1").arg(socket.errorString()));
-        return false;
-    }
-
-    if (!socket.waitForReadyRead(5000)) {
-        setError(tr("NTP request timed out"));
-        return false;
-    }
-
-    QByteArray response(48, 0);
-    qint64 received = socket.readDatagram(response.data(), response.size());
-    if (received < 48) {
-        setError(tr("Invalid NTP response"));
-        return false;
-    }
-
     auto readUint32BE = [](const QByteArray &buf, int offset) -> quint32 {
-        return (static_cast<quint32>(static_cast<quint8>(buf[offset])) << 24) | (static_cast<quint32>(static_cast<quint8>(buf[offset + 1])) << 16) | (static_cast<quint32>(static_cast<quint8>(buf[offset + 2])) << 8) | (static_cast<quint32>(static_cast<quint8>(buf[offset + 3])));
+        return (static_cast<quint32>(static_cast<quint8>(buf[offset])) << 24)
+             | (static_cast<quint32>(static_cast<quint8>(buf[offset + 1])) << 16)
+             | (static_cast<quint32>(static_cast<quint8>(buf[offset + 2])) << 8)
+             |  static_cast<quint32>(static_cast<quint8>(buf[offset + 3]));
     };
+
+    // LI（闰秒指示）= 字节 0 的高 2 位；3 表示服务器自身未同步 / 报警，不可信。
+    const quint8 li = (static_cast<quint8>(response[0]) >> 6) & 0x3;
+    if (li == 3) {
+        setError(tr("NTP server is unsynchronized (alarm condition)"));
+        return false;
+    }
+    // Stratum = 字节 1；0 = Kiss-of-Death（KoD），拒绝接受并应回退。
+    const quint8 stratum = static_cast<quint8>(response[1]);
+    if (stratum == 0) {
+        setError(tr("NTP server returned kiss-of-death (stratum 0)"));
+        return false;
+    }
 
     quint32 secsSince1900 = readUint32BE(response, 40);
     quint32 fracSeconds = readUint32BE(response, 44);
@@ -194,7 +280,7 @@ bool TimeSyncManager::fetchAndApplyNtp(const QString &server, QString *errorOut)
     st.wYear = static_cast<WORD>(date.year());
     st.wMonth = static_cast<WORD>(date.month());
     st.wDay = static_cast<WORD>(date.day());
-    st.wDayOfWeek = static_cast<WORD>(date.dayOfWeek() % 7); // Win: Sun=0..Sat=6
+    st.wDayOfWeek = static_cast<WORD>(date.dayOfWeek() % 7);
     st.wHour = static_cast<WORD>(time.hour());
     st.wMinute = static_cast<WORD>(time.minute());
     st.wSecond = static_cast<WORD>(time.second());

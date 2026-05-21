@@ -17,7 +17,7 @@ if(MSVC)
   add_compile_options(/utf-8)
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS
+find_package(Qt6 6.10 REQUIRED COMPONENTS
     Core
     Gui
     Qml
@@ -80,6 +80,8 @@ qt_add_qml_module(WinTimeMaster
         Core/TimeSyncManager.cpp
         Core/LockController.h
         Core/LockController.cpp
+        Core/AsyncLogger.h
+        Core/AsyncLogger.cpp
     RESOURCES
         Resources.qrc
 )
@@ -92,7 +94,6 @@ target_compile_definitions(WinTimeMaster PRIVATE DISPLAY_VERSION="${DISPLAY_VERS
 
 target_link_libraries(WinTimeMaster
     PRIVATE
-        Qt6::Quick
         Qt6::Core
         Qt6::Gui
         Qt6::Qml

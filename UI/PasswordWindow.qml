@@ -20,17 +20,20 @@ ApplicationWindow {
     function verifyAndProceed() {
         if (SettingsController.verifyPassword(passwordField.text)) {
             if (actionType === "quit") {
+                console.warn("Quitting program (password verified)");
                 Qt.quit();
             } else if (actionType === "service") {
                 passwordWindow.hide();
                 LockController.toggleChecking();
             } else {
+                console.warn("Opening settings (password verified)");
                 passwordWindow.hide();
                 SettingsWindow.show();
                 SettingsWindow.raise();
                 SettingsWindow.requestActivate();
             }
         } else {
+            console.warn("Password verification failed, access denied");
             SettingsController.showPasswordError();
             passwordField.text = "";
             passwordField.forceActiveFocus();
@@ -40,6 +43,9 @@ ApplicationWindow {
     function showForAction(type) {
         actionType = type;
         passwordField.text = "";
+        if (type === "quit") console.warn("Attempting to quit the program, password verification required");
+        else if (type === "service") console.warn("Attempting to toggle service, password verification required");
+        else console.warn("Attempting to open settings, password verification required");
         passwordWindow.show();
         passwordWindow.raise();
         passwordWindow.requestActivate();
@@ -48,6 +54,9 @@ ApplicationWindow {
 
     onClosing: function(close) {
         close.accepted = false;
+        if (actionType === "quit") console.warn("Quit operation cancelled, password verification not passed");
+        else if (actionType === "service") console.warn("Service toggle cancelled, password verification not passed");
+        else console.warn("Settings access cancelled, password verification not passed");
         passwordWindow.hide();
         if (actionType === "settings") {
             TrayManager.hideSettingsWindow();

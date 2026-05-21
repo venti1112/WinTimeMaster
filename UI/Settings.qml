@@ -4,6 +4,7 @@ import QtQuick.Layouts
 
 ApplicationWindow {
     id: settingsWindow
+    objectName: "settingsWindow"
     visible: false
     width: 900
     height: 520
@@ -26,6 +27,7 @@ ApplicationWindow {
 
     function showWithPasswordCheck() {
         if (SettingsController.password === "") {
+            console.warn("Opening settings (no password set)");
             settingsWindow.show();
             settingsWindow.raise();
             settingsWindow.requestActivate();
@@ -36,6 +38,7 @@ ApplicationWindow {
 
     function quitWithPasswordCheck() {
         if (SettingsController.password === "") {
+            console.warn("Quitting program (no password set)");
             Qt.quit();
         } else {
             AuthWindow.showForAction("quit");
@@ -113,7 +116,10 @@ ApplicationWindow {
                                 }
                                 modeStr = selected.join(", ");
                             } else {
-                                modeStr = [qsTr("Once"), qsTr("Daily")][model.repeatMode];
+                                let modeLabels = [qsTr("Once"), qsTr("Daily")];
+                                modeStr = (model.repeatMode >= 0 && model.repeatMode < modeLabels.length)
+                                    ? modeLabels[model.repeatMode]
+                                    : qsTr("Unknown");
                             }
                             let status = model.enabled ? qsTr("Enabled") : qsTr("Disabled");
                             return "%1 - %2  %3  [%4]".arg(start).arg(end).arg(modeStr).arg(status);
@@ -135,31 +141,49 @@ ApplicationWindow {
                         anchors.fill: parent
                         acceptedButtons: Qt.RightButton
                         onClicked: function(mouse) {
-                            contextMenu.popup(itemDelegate, mouse.x, mouse.y);
+                            ruleContextMenu.targetIndex = index;
+                            ruleContextMenu.targetRuleId = model.ruleId;
+                            ruleContextMenu.targetStartTime = model.startTime;
+                            ruleContextMenu.targetEndTime = model.endTime;
+                            ruleContextMenu.targetRepeatMode = model.repeatMode;
+                            ruleContextMenu.targetWeekDays = model.weekDays;
+                            ruleContextMenu.targetEnabled = model.enabled;
+                            ruleContextMenu.popup();
                         }
                     }
+                }
+            }
 
-                    Menu {
-                        id: contextMenu
-                        MenuItem {
-                            text: qsTr("Edit")
-                            onTriggered: {
-                                ruleEditorDialog.ruleIndex = index;
-                                ruleEditorDialog.ruleId = model.ruleId;
-                                ruleEditorDialog.startTime = model.startTime;
-                                ruleEditorDialog.endTime = model.endTime;
-                                ruleEditorDialog.repeatMode = model.repeatMode;
-                                ruleEditorDialog.weekDays = model.weekDays;
-                                ruleEditorDialog.ruleEnabled = model.enabled;
-                                ruleEditorDialog.open();
-                            }
-                        }
-                        MenuItem {
-                            text: qsTr("Delete")
-                            onTriggered: {
-                                SettingsController.timeRuleModel.removeRule(index);
-                            }
-                        }
+            // 共享右键菜单，弹出前由 delegate 写入目标数据
+            Menu {
+                id: ruleContextMenu
+                property int targetIndex: -1
+                property int targetRuleId: -1
+                property var targetStartTime: null
+                property var targetEndTime: null
+                property int targetRepeatMode: 1
+                property int targetWeekDays: 0
+                property bool targetEnabled: true
+
+                MenuItem {
+                    text: qsTr("Edit")
+                    onTriggered: {
+                        if (ruleContextMenu.targetIndex < 0) return;
+                        ruleEditorDialog.ruleIndex = ruleContextMenu.targetIndex;
+                        ruleEditorDialog.ruleId = ruleContextMenu.targetRuleId;
+                        ruleEditorDialog.startTime = ruleContextMenu.targetStartTime;
+                        ruleEditorDialog.endTime = ruleContextMenu.targetEndTime;
+                        ruleEditorDialog.repeatMode = ruleContextMenu.targetRepeatMode;
+                        ruleEditorDialog.weekDays = ruleContextMenu.targetWeekDays;
+                        ruleEditorDialog.ruleEnabled = ruleContextMenu.targetEnabled;
+                        ruleEditorDialog.open();
+                    }
+                }
+                MenuItem {
+                    text: qsTr("Delete")
+                    onTriggered: {
+                        if (ruleContextMenu.targetIndex < 0) return;
+                        SettingsController.timeRuleModel.removeRule(ruleContextMenu.targetIndex);
                     }
                 }
             }

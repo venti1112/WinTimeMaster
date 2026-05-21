@@ -39,6 +39,7 @@ private:
     void loadRules();
     void saveRules();
     int nextRuleId();
+    void connectRuleSignals(TimeRule *rule);
 
     QList<TimeRule*> m_rules;
     int m_nextId = 1;

@@ -66,6 +66,21 @@ Dialog {
         qsTr("Bottom Left"), qsTr("Bottom Center"), qsTr("Bottom Right")
     ]
 
+    // 把 FileDialog 给的 file:/// URL 转成本机原生路径
+    function urlToNativePath(url) {
+        let s = url.toString();
+        if (s.startsWith("file:///")) {
+            if (Qt.platform.os === "windows") {
+                s = s.substring(8);  // 去掉 file:///
+            } else {
+                s = s.substring(7);  // 去掉 file:// — 保留 leading /
+            }
+        } else if (s.startsWith("file://")) {
+            s = s.substring(7);
+        }
+        return decodeURIComponent(s);
+    }
+
     onAccepted: {
         let bg = SettingsController.lockScreenBackground;
         let lower = bg.toLowerCase();
@@ -198,8 +213,8 @@ Dialog {
                         onEditingFinished: TimeSyncManager.setServer(text)
                     }
                     Button {
-                        text: qsTr("Sync Now")
-                        enabled: autoSyncCheck.checked
+                        text: TimeSyncManager.syncing ? qsTr("Syncing...") : qsTr("Sync Now")
+                        enabled: autoSyncCheck.checked && !TimeSyncManager.syncing
                         onClicked: {
                             TimeSyncManager.setServer(serverField.text);
                             TimeSyncManager.syncNow();
@@ -530,6 +545,13 @@ Dialog {
                         onClicked: videoFileDialog.open()
                     }
                 }
+
+                CheckBox {
+                    visible: bgModeCombo.currentIndex === 3
+                    text: qsTr("Play Video Sound")
+                    checked: SettingsController.lockBackgroundVideoSound
+                    onToggled: SettingsController.setLockBackgroundVideoSound(checked)
+                }
             }
 
             // ── 锁屏文字设置 ──
@@ -558,14 +580,22 @@ Dialog {
                 }
                 Repeater {
                     model: [
-                        { key: "prompt",    label: qsTr("Prompt"),         color: promptColor },
-                        { key: "current",   label: qsTr("Current Time"),   color: currentTimeColor },
-                        { key: "unlock",    label: qsTr("Unlock Time"),    color: unlockTimeColor },
-                        { key: "remaining", label: qsTr("Remaining Time"), color: remainingTimeColor }
+                        { key: "prompt",    label: qsTr("Prompt") },
+                        { key: "current",   label: qsTr("Current Time") },
+                        { key: "unlock",    label: qsTr("Unlock Time") },
+                        { key: "remaining", label: qsTr("Remaining Time") }
                     ]
                     delegate: RowLayout {
                         Layout.fillWidth: true
                         spacing: 8
+                        // 反应式颜色：跟随父级镜像属性的变化即时刷新预览与文本框
+                        readonly property string itemColor: {
+                            if (modelData.key === "prompt")    return promptColor;
+                            if (modelData.key === "current")   return currentTimeColor;
+                            if (modelData.key === "unlock")    return unlockTimeColor;
+                            if (modelData.key === "remaining") return remainingTimeColor;
+                            return "#ffffffff";
+                        }
                         Label {
                             text: modelData.label
                             Layout.preferredWidth: 96
@@ -573,12 +603,13 @@ Dialog {
                         }
                         Rectangle {
                             width: 28; height: 28; radius: 4
-                            color: modelData.color
+                            color: itemColor
                             border.color: palette.mid
                         }
                         TextField {
+                            id: colorField
                             Layout.fillWidth: true
-                            Component.onCompleted: text = modelData.color
+                            text: itemColor
                             onEditingFinished: {
                                 let v = text.trim();
                                 if (v.startsWith("#") && v.length >= 7) {
@@ -590,16 +621,16 @@ Dialog {
                                         SettingsController.setLockUnlockTimeColor(v);
                                     else if (modelData.key === "remaining")
                                         SettingsController.setLockRemainingTimeColor(v);
-                                } else {
-                                    text = modelData.color;
                                 }
+                                // 用户输入会破坏 text 与 itemColor 的绑定 —— 重新建立
+                                text = Qt.binding(function() { return itemColor });
                             }
                         }
                         Button {
                             text: qsTr("Pick Color")
                             onClicked: {
                                 textColorDialog.targetKey = modelData.key;
-                                textColorDialog.selectedColor = modelData.color;
+                                textColorDialog.selectedColor = itemColor;
                                 textColorDialog.open();
                             }
                         }
@@ -683,14 +714,14 @@ Dialog {
         id: imageFileDialog
         title: qsTr("Select Background Image")
         nameFilters: [ "Image files (*.png *.jpg *.jpeg *.bmp)" ]
-        onAccepted: SettingsController.setLockScreenBackground(selectedFile.toString())
+        onAccepted: SettingsController.setLockScreenBackground(urlToNativePath(selectedFile))
     }
 
     FileDialog {
         id: videoFileDialog
         title: qsTr("Select Background Video")
         nameFilters: [ "Video files (*.mp4 *.avi *.mov *.wmv *.mkv)" ]
-        onAccepted: SettingsController.setLockScreenBackground(selectedFile.toString())
+        onAccepted: SettingsController.setLockScreenBackground(urlToNativePath(selectedFile))
     }
     FileDialog {
         id: exportFileDialog
@@ -698,11 +729,7 @@ Dialog {
         nameFilters: ["JSON files (*.json)"]
         fileMode: FileDialog.SaveFile
         onAccepted: {
-            let path = selectedFile.toString().replace("file:///", "");
-            if (Qt.platform.os === "windows") {
-                if (path.startsWith("/"))
-                    path = path.substring(1);
-            }
+            let path = urlToNativePath(selectedFile);
             let err = SettingsController.exportSettings(path);
             if (err) {
                 messageDialog.dialogTitle = qsTr("Export Error");
@@ -722,11 +749,7 @@ Dialog {
         nameFilters: ["JSON files (*.json)"]
         fileMode: FileDialog.OpenFile
         onAccepted: {
-            let path = selectedFile.toString().replace("file:///", "");
-            if (Qt.platform.os === "windows") {
-                if (path.startsWith("/"))
-                    path = path.substring(1);
-            }
+            let path = urlToNativePath(selectedFile);
             let err = SettingsController.importSettings(path);
             if (err) {
                 messageDialog.dialogTitle = qsTr("Import Error");

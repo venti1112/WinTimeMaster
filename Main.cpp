@@ -3,13 +3,15 @@
 #include <QQmlContext>
 #include <QQuickStyle>
 #include <QIcon>
-#include <QFont>
 #include <QCommandLineParser>
 #include <QLocalSocket>
-#include <QSharedMemory>
 #include <QSurfaceFormat>
 #include <QStandardPaths>
+#include <QDebug>
+#include <windows.h>
+#include <shellapi.h>
 
+#include "Core/AsyncLogger.h"
 #include "Core/ConfigManager.h"
 #include "Core/LanguageManager.h"
 #include "Core/SettingsController.h"
@@ -20,48 +22,71 @@
 #include "Core/UpdateChecker.h"
 #include "Core/RemoteConfigUpdater.h"
 
-#include <windows.h>
-#include <shellapi.h>
-
-static bool isAdmin()
-{
+static bool isAdmin() {
+    qInfo("Permissions checking");
     HANDLE hToken = nullptr;
-    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
-        return false;
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken)) qFatal("The system environment is abnormal and permissions cannot be checked.");
     TOKEN_ELEVATION elevation;
     DWORD size = sizeof(TOKEN_ELEVATION);
     bool result = false;
-    if (GetTokenInformation(hToken, TokenElevation, &elevation, size, &size))
-        result = (elevation.TokenIsElevated != 0);
+    if (GetTokenInformation(hToken, TokenElevation, &elevation, size, &size)) result = (elevation.TokenIsElevated != 0);
     CloseHandle(hToken);
     return result;
 }
 
-static void restartAsAdmin()
-{
+static bool restartAsAdmin(int argc, char *argv[]) {
+    qInfo("Attempting privilege escalation");
     wchar_t exePath[MAX_PATH];
     GetModuleFileNameW(NULL, exePath, MAX_PATH);
-    ShellExecuteW(NULL, L"runas", exePath, NULL, NULL, SW_SHOW);
+
+    QStringList args;
+    for (int i = 1; i < argc; ++i)
+        args << QString::fromLocal8Bit(argv[i]);
+    QString joined = args.join(' ');
+    std::wstring wargs = joined.toStdWString();
+
+    HINSTANCE result = ShellExecuteW(NULL, L"runas", exePath, wargs.empty() ? nullptr : wargs.c_str(), NULL, SW_SHOW);
+    if ((INT_PTR)result > 32) {
+        qInfo("Elevated process launched successfully.");
+        return true;
+    } else {
+        DWORD error = GetLastError();
+        qFatal() << "Failed to elevate privileges. ShellExecute error:" << error;
+        return false;
+    }
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
+    QApplication app(argc, argv);
+
+    QCoreApplication::setApplicationName("WinTimeMaster");
+    QCoreApplication::setApplicationVersion(DISPLAY_VERSION);
+    QCoreApplication::setOrganizationName("Venti1112");
+    QCoreApplication::setOrganizationDomain("ventichat.com");
+    QGuiApplication::setApplicationDisplayName("WinTimeMaster");
+    QGuiApplication::setDesktopFileName("WinTimeMaster");
+
+    AsyncLogger::instance().init();
+    AsyncLogger::instance().setLogLevel(QtDebugMsg);
+    AsyncLogger::instance().setConsoleOutput(true);
+
+    qInfo("Program starting");
+    qInfo("Log system initialization complete");
+
     if (!isAdmin()) {
-        restartAsAdmin();
+        qInfo("Not administrator privileges, privilege escalation is imminent.");
+        if (!restartAsAdmin(argc, argv)) {
+            return 1;
+        }
+        qInfo("A high-privilege process has been started and is about to exit.");
         return 0;
     }
 
-    QSurfaceFormat format;
-    format.setAlphaBufferSize(8);
-    QSurfaceFormat::setDefaultFormat(format);
+    qInfo("Permission check passed; administrator privileges granted.");
 
-    QApplication app(argc, argv);
-
-    QSharedMemory sharedMem("Global\\WinTimeMaster_SingleInstance");
-    if (sharedMem.attach()) {
-        sharedMem.detach();
-    }
-    if (!sharedMem.create(1)) {
+    HANDLE instanceMutex = ::CreateMutexW(nullptr, FALSE, L"WinTimeMaster_SingleInstance");
+    DWORD lastError = ::GetLastError();
+    if (instanceMutex == nullptr || lastError == ERROR_ALREADY_EXISTS) {
         QLocalSocket socket;
         socket.connectToServer("WinTimeMaster_IPC");
         if (socket.waitForConnected(2000)) {
@@ -70,6 +95,7 @@ int main(int argc, char *argv[])
         } else {
             qWarning() << "Could not connect to existing instance.";
         }
+        if (instanceMutex) ::CloseHandle(instanceMutex);
         return 0;
     }
 
@@ -79,12 +105,10 @@ int main(int argc, char *argv[])
     parser.process(app);
     bool startMinimized = parser.isSet(autostartOption);
 
-    QCoreApplication::setApplicationName("WinTimeMaster");
-    QCoreApplication::setApplicationVersion(DISPLAY_VERSION);
-    QCoreApplication::setOrganizationName("Venti1112");
-    QCoreApplication::setOrganizationDomain("ventichat.com");
-    QGuiApplication::setApplicationDisplayName("WinTimeMaster");
-    QGuiApplication::setDesktopFileName("WinTimeMaster");
+    QSurfaceFormat format;
+    format.setAlphaBufferSize(8);
+    QSurfaceFormat::setDefaultFormat(format);
+
     app.setWindowIcon(QIcon(":/icon.ico"));
 
     QQuickStyle::setStyle("FluentWinUI3");
@@ -139,20 +163,26 @@ int main(int argc, char *argv[])
     QObject *settingsWindow = nullptr;
     QObject *passwordWindow = nullptr;
     for (QObject *obj : engine.rootObjects()) {
-        if (obj->objectName() == "passwordWindow") {
+        const QString name = obj->objectName();
+        if (name == "passwordWindow")
             passwordWindow = obj;
-        } else if (obj->objectName().isEmpty() && !settingsWindow) {
+        else if (name == "settingsWindow")
             settingsWindow = obj;
-        }
     }
     if (settingsWindow)
         engine.rootContext()->setContextProperty("SettingsWindow", settingsWindow);
     if (passwordWindow)
         engine.rootContext()->setContextProperty("AuthWindow", passwordWindow);
 
+    trayManager->setSettingsWindow(settingsWindow);
+
     if (!startMinimized) {
         trayManager->showSettingsWindow();
     }
+    qInfo("Program initialization complete!");
 
-    return app.exec();
+    int ret = app.exec();
+    qInfo("Program Exit");
+    AsyncLogger::instance().shutdown();
+    return ret;
 }

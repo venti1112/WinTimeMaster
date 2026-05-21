@@ -7,8 +7,6 @@
 #include <QDebug>
 
 LanguageManager::LanguageManager(QQmlApplicationEngine *engine, QObject *parent) : QObject(parent), m_engine(engine) {
-    m_translator = new QTranslator(this);
-
     QString savedLang = ConfigManager::instance()->readString("Language");
 
     bool loaded = false;
@@ -33,26 +31,36 @@ void LanguageManager::switchLanguage(const QString &languageCode) {
 }
 
 bool LanguageManager::loadTranslation(const QString &languageCode) {
-    qApp->removeTranslator(m_translator);
+    QStringList candidates;
+    candidates << QString(":/i18n/%1.qm").arg(languageCode);
+    const QString langOnly = languageCode.section('_', 0, 0);
+    if (langOnly != languageCode)
+        candidates << QString(":/i18n/%1.qm").arg(langOnly);
 
-    QString qmPath = QString(":/i18n/%1.qm").arg(languageCode);
-    bool loaded = m_translator->load(qmPath);
-
-    if (!loaded) {
-        QString langOnly = languageCode.section('_', 0, 0);
-        if (langOnly != languageCode) {
-            qmPath = QString(":/i18n/%1.qm").arg(langOnly);
-            loaded = m_translator->load(qmPath);
+    auto *candidate = new QTranslator(this);
+    QString loadedPath;
+    for (const QString &path : candidates) {
+        if (candidate->load(path)) {
+            loadedPath = path;
+            break;
         }
     }
 
-    if (loaded) {
-        qApp->installTranslator(m_translator);
-        m_currentLanguage = languageCode;
-        qDebug() << "Loaded translation:" << qmPath;
+    if (loadedPath.isEmpty()) {
+        delete candidate;
+        qWarning() << "Failed to load translation for:" << languageCode;
+        return false;
     }
-    else qWarning() << "Failed to load translation for:" << languageCode;
-    return loaded;
+
+    if (m_translator) {
+        qApp->removeTranslator(m_translator);
+        m_translator->deleteLater();
+    }
+    m_translator = candidate;
+    qApp->installTranslator(m_translator);
+    m_currentLanguage = languageCode;
+    qInfo() << "Loaded translation:" << loadedPath;
+    return true;
 }
 
 QString LanguageManager::resolveLanguageCode(const QString &localeName) const {

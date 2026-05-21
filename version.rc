@@ -18,7 +18,7 @@ BEGIN
             VALUE "FileVersion", "@PROJECT_VERSION@"
             VALUE "ProductVersion", "@PROJECT_VERSION@"
             VALUE "InternalName", "Venti1112\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 Venti1112，is a OpenSource project.\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Venti1112. Licensed under the GNU General Public License v3.0.\0"
             VALUE "OriginalFilename", "WinTimeMaster.exe\0"
             VALUE "ProductName", "WinTimeMaster\0"
         END

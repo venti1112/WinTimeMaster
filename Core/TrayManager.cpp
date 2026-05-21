@@ -12,6 +12,10 @@ TrayManager::TrayManager(QQmlApplicationEngine *engine, QObject *parent) : QObje
     setupIpcServer();
 }
 
+TrayManager::~TrayManager() {
+    delete m_trayMenu;
+}
+
 void TrayManager::setupTrayIcon() {
     m_trayIcon = new QSystemTrayIcon(this);
     m_trayIcon->setIcon(QIcon(":/icon.ico"));
@@ -34,13 +38,15 @@ void TrayManager::setupMenu() {
 
     m_quitAction = m_trayMenu->addAction(tr("Quit"));
     connect(m_quitAction, &QAction::triggered, this, [this]() {
-        if (m_engine) {
-            QObject *rootObj = m_engine->rootObjects().value(0);
-            if (rootObj) QMetaObject::invokeMethod(rootObj, "quitWithPasswordCheck");
-        }
+        if (m_settingsWindow)
+            QMetaObject::invokeMethod(m_settingsWindow, "quitWithPasswordCheck");
     });
 
     m_trayIcon->setContextMenu(m_trayMenu);
+}
+
+void TrayManager::setSettingsWindow(QObject *window) {
+    m_settingsWindow = window;
 }
 
 void TrayManager::setLockController(LockController *ctrl) {
@@ -53,14 +59,13 @@ void TrayManager::setLockController(LockController *ctrl) {
         m_startStopAction = nullptr;
     }
 
-    m_startStopAction = new QAction(tr("Start Service"), this);
+    // 与 m_showAction / m_quitAction 一致，让菜单成为唯一的 owner —— 析构时一并销毁
+    m_startStopAction = new QAction(m_lockCtrl->isChecking() ? tr("Stop Service") : tr("Start Service"), m_trayMenu);
     m_trayMenu->insertAction(m_quitAction, m_startStopAction);
 
     connect(m_startStopAction, &QAction::triggered, this, [this]() {
-        if (m_engine) {
-            QObject *rootObj = m_engine->rootObjects().value(0);
-            if (rootObj) QMetaObject::invokeMethod(rootObj, "toggleServiceWithPasswordCheck");
-        }
+        if (m_settingsWindow)
+            QMetaObject::invokeMethod(m_settingsWindow, "toggleServiceWithPasswordCheck");
     });
     connect(ctrl, &LockController::checkingChanged, this, [this](bool checking) {
         if (m_startStopAction) m_startStopAction->setText(checking ? tr("Stop Service") : tr("Start Service"));
@@ -71,17 +76,13 @@ void TrayManager::setLockController(LockController *ctrl) {
 }
 
 void TrayManager::showSettingsWindow() {
-    if (m_engine) {
-        QObject *rootObj = m_engine->rootObjects().value(0);
-        if (rootObj) QMetaObject::invokeMethod(rootObj, "showWithPasswordCheck");
-    }
+    if (m_settingsWindow)
+        QMetaObject::invokeMethod(m_settingsWindow, "showWithPasswordCheck");
 }
 
 void TrayManager::hideSettingsWindow() {
-    if (m_engine) {
-        QObject *rootObj = m_engine->rootObjects().value(0);
-        if (auto window = qobject_cast<QWindow*>(rootObj)) window->hide();
-    }
+    if (auto window = qobject_cast<QWindow*>(m_settingsWindow))
+        window->hide();
 }
 
 void TrayManager::showTrayIcon() {

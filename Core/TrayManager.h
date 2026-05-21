@@ -15,9 +15,10 @@ class TrayManager : public QObject {
 
 public:
     explicit TrayManager(QQmlApplicationEngine *engine, QObject *parent = nullptr);
-    ~TrayManager() override = default;
+    ~TrayManager() override;
 
     void setLockController(LockController *ctrl);
+    void setSettingsWindow(QObject *window);
 
     Q_INVOKABLE void showSettingsWindow();
     Q_INVOKABLE void hideSettingsWindow();
@@ -33,6 +34,7 @@ private:
     void setupIpcServer();
 
     QQmlApplicationEngine *m_engine = nullptr;
+    QObject *m_settingsWindow = nullptr;
     QSystemTrayIcon *m_trayIcon = nullptr;
     QMenu *m_trayMenu = nullptr;
     QAction *m_showAction = nullptr;

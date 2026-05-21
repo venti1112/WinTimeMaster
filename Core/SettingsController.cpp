@@ -4,6 +4,9 @@
 #include <QCoreApplication>
 #include <QProcess>
 #include <QFile>
+#include <QSaveFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QMessageBox>
 #include <QDebug>
 
@@ -79,6 +82,15 @@ void SettingsController::setLockScreenBackground(const QString &background) {
     if (lockScreenBackground() == background) return;
     ConfigManager::instance()->writeString("LockBackground", background);
     emit lockScreenBackgroundChanged(background);
+}
+
+bool SettingsController::lockBackgroundVideoSound() const {
+    return ConfigManager::instance()->readBool("LockBackgroundVideoSound", false);
+}
+void SettingsController::setLockBackgroundVideoSound(bool enabled) {
+    if (lockBackgroundVideoSound() == enabled) return;
+    ConfigManager::instance()->writeBool("LockBackgroundVideoSound", enabled);
+    emit lockBackgroundVideoSoundChanged(enabled);
 }
 
 QString SettingsController::lockPromptColor() const {
@@ -212,6 +224,7 @@ bool SettingsController::verifyPassword(const QString &input) const
 
 void SettingsController::showPasswordError()
 {
+    qWarning("The user entered an incorrect password!");
     QMessageBox msgBox;
     msgBox.setWindowTitle(tr("Password Error"));
     msgBox.setText(tr("Incorrect password"));
@@ -236,12 +249,53 @@ QString SettingsController::exportSettings(const QString &filePath)
 
 QString SettingsController::importSettings(const QString &filePath)
 {
+    QFile src(filePath);
+    if (!src.open(QIODevice::ReadOnly))
+        return tr("Cannot open import file: %1").arg(src.errorString());
+
+    QByteArray bytes = src.readAll();
+    src.close();
+
+    QJsonParseError parseError;
+    QJsonDocument doc = QJsonDocument::fromJson(bytes, &parseError);
+    if (parseError.error != QJsonParseError::NoError)
+        return tr("Invalid JSON: %1").arg(parseError.errorString());
+    if (!doc.isObject())
+        return tr("Settings file must contain a JSON object");
+
+    QJsonObject obj = doc.object();
+    static const QStringList kKnownKeys = {
+        "AutoTimeSync", "TimeSyncServer", "TimeSyncIntervalMinutes",
+        "AutoStart", "DisableTaskManager", "EnableInputBlock", "KillTaskmgr",
+        "EmergencyExitEnabled", "EmergencyExitClickCount",
+        "LockBackground", "LockBackgroundVideoSound",
+        "LockPromptColor", "LockCurrentTimeColor",
+        "LockUnlockTimeColor", "LockRemainingTimeColor",
+        "LockTextPosition", "LockPromptText",
+        "HideCurrentTime", "HideUnlockTime", "HideRemainingTime",
+        "PasswordHash", "ServiceRunning", "TimeRules",
+        "RemoteConfigEnabled", "RemoteConfigUrl", "RemoteConfigIntervalMinutes",
+        "Language"
+    };
+    bool looksLikeOurs = false;
+    for (const QString &k : kKnownKeys) {
+        if (obj.contains(k)) { looksLikeOurs = true; break; }
+    }
+    if (!looksLikeOurs)
+        return tr("Not a valid WinTimeMaster settings file");
+
     ConfigManager *cfg = ConfigManager::instance();
     QString destPath = cfg->configFilePath();
 
-    QFile::remove(destPath);
-
-    if (!QFile::copy(filePath, destPath)) return tr("Cannot import config file");
+    QSaveFile out(destPath);
+    if (!out.open(QIODevice::WriteOnly))
+        return tr("Cannot write to config: %1").arg(out.errorString());
+    if (out.write(bytes) == -1) {
+        out.cancelWriting();
+        return tr("Failed to write config: %1").arg(out.errorString());
+    }
+    if (!out.commit())
+        return tr("Failed to commit config: %1").arg(out.errorString());
 
     cfg->loadFromFile();
 

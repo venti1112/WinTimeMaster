@@ -31,6 +31,7 @@ Window {
     property bool hideRemainingTime: false
     property bool emergencyExitEnabled: false
     property int emergencyExitClickCount: 3
+    property bool backgroundVideoSound: false
 
     property int _emergencyClickCount: 0
     property bool _showEmergencyPassword: false
@@ -84,7 +85,7 @@ Window {
     MediaPlayer {
         id: mediaPlayer
         source: isVideo ? backgroundImage : ""
-        audioOutput: AudioOutput { muted: false }
+        audioOutput: AudioOutput { muted: !backgroundVideoSound }
         loops: MediaPlayer.Infinite
         autoPlay: false
         videoOutput: videoOutput  // ✅ 正确：绑定已声明的 VideoOutput 实例 id
@@ -221,7 +222,7 @@ Window {
                         _showEmergencyPassword = true
                         emergencyPwdField.forceActiveFocus()
                     } else {
-                        LockController.emergencyExit()
+                        LockController.emergencyExit("")
                     }
                 }
             }
@@ -334,9 +335,7 @@ Window {
     }
 
     function verifyEmergencyExit() {
-        if (SettingsController.verifyPassword(emergencyPwdField.text)) {
-            LockController.emergencyExit()
-        } else {
+        if (!LockController.emergencyExit(emergencyPwdField.text)) {
             emergencyPwdError.visible = true
             emergencyPwdField.text = ""
             emergencyPwdField.forceActiveFocus()
@@ -359,5 +358,13 @@ Window {
         else mediaPlayer.stop()
     }
 
-    onClosing: function(close) { close.accepted = false }
+    onClosing: function(close) { close.accepted = _allowClose }
+
+    // 应用即将退出时允许关闭锁屏窗口（紧急退出 / Qt.quit / 进程退出），
+    // 否则拒绝用户主动关闭以保证锁屏不可绕过
+    property bool _allowClose: false
+    Connections {
+        target: Qt.application
+        function onAboutToQuit() { _allowClose = true }
+    }
 }

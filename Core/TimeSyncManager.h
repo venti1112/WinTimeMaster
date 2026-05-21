@@ -3,8 +3,11 @@
 
 #include <QObject>
 #include <QString>
+#include <QHostAddress>
 
 class QTimer;
+class QUdpSocket;
+class QHostInfo;
 
 class TimeSyncManager : public QObject {
     Q_OBJECT
@@ -14,6 +17,7 @@ class TimeSyncManager : public QObject {
     Q_PROPERTY(QString lastSyncStatus READ lastSyncStatus NOTIFY lastSyncResult)
     Q_PROPERTY(QString lastSyncTime READ lastSyncTime NOTIFY lastSyncResult)
     Q_PROPERTY(bool lastSyncSuccess READ lastSyncSuccess NOTIFY lastSyncResult)
+    Q_PROPERTY(bool syncing READ isSyncing NOTIFY syncingChanged)
 
 public:
     explicit TimeSyncManager(QObject *parent = nullptr);
@@ -31,6 +35,7 @@ public:
     QString lastSyncStatus() const;
     QString lastSyncTime() const;
     bool lastSyncSuccess() const;
+    bool isSyncing() const;
 
     void reloadFromConfig();
 
@@ -42,11 +47,21 @@ signals:
     void serverChanged(const QString &server);
     void intervalMinutesChanged(int minutes);
     void lastSyncResult();
+    void syncingChanged(bool syncing);
+
+private slots:
+    void onHostLookupFinished(const QHostInfo &hostInfo);
+    void onSocketReadyRead();
+    void onStageTimeout();
 
 private:
     void rescheduleTimer();
-    bool fetchAndApplyNtp(const QString &server, QString *errorOut);
     void recordResult(bool success, const QString &message);
+    void startStageTimeout(int ms);
+    void finishWithError(const QString &message);
+    void finishWithSuccess();
+    void resetPipeline();
+    bool applyNtpResponse(const QByteArray &response, QString *errorOut);
 
     QTimer *m_timer = nullptr;
     bool m_enabled = false;
@@ -56,6 +71,12 @@ private:
     QString m_lastStatus;
     QString m_lastTime;
     bool m_lastSuccess = false;
+
+    bool m_syncing = false;
+    int m_lookupId = -1;
+    QUdpSocket *m_socket = nullptr;
+    QTimer *m_stageTimer = nullptr;
+    QHostAddress m_targetAddress;
 };
 
 #endif // TIMESYNCMANAGER_H
