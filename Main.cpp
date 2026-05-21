@@ -20,14 +20,11 @@
 #include "Core/UpdateChecker.h"
 #include "Core/RemoteConfigUpdater.h"
 
-#ifdef Q_OS_WIN
 #include <windows.h>
 #include <shellapi.h>
-#endif
 
 static bool isAdmin()
 {
-#ifdef Q_OS_WIN
     HANDLE hToken = nullptr;
     if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
         return false;
@@ -38,18 +35,13 @@ static bool isAdmin()
         result = (elevation.TokenIsElevated != 0);
     CloseHandle(hToken);
     return result;
-#else
-    return true;
-#endif
 }
 
 static void restartAsAdmin()
 {
-#ifdef Q_OS_WIN
     wchar_t exePath[MAX_PATH];
     GetModuleFileNameW(NULL, exePath, MAX_PATH);
     ShellExecuteW(NULL, L"runas", exePath, NULL, NULL, SW_SHOW);
-#endif
 }
 
 int main(int argc, char *argv[])
@@ -65,14 +57,11 @@ int main(int argc, char *argv[])
 
     QApplication app(argc, argv);
 
-    // ----- 单实例检测 -----
     QSharedMemory sharedMem("Global\\WinTimeMaster_SingleInstance");
-    // 清理上次可能残留的共享内存段
     if (sharedMem.attach()) {
         sharedMem.detach();
     }
     if (!sharedMem.create(1)) {
-        // 已有实例运行，通过 IPC 通知旧实例显示窗口
         QLocalSocket socket;
         socket.connectToServer("WinTimeMaster_IPC");
         if (socket.waitForConnected(2000)) {
@@ -84,7 +73,6 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    // 命令行解析
     QCommandLineParser parser;
     QCommandLineOption autostartOption("autostart", "Start minimized to tray.");
     parser.addOption(autostartOption);

@@ -5,8 +5,7 @@
 #include <QTime>
 #include <QString>
 
-class TimeRule : public QObject
-{
+class TimeRule : public QObject {
     Q_OBJECT
 
     Q_PROPERTY(int id READ id CONSTANT)
@@ -30,7 +29,7 @@ public:
     QTime startTime() const;
     QTime endTime() const;
     RepeatMode repeatMode() const;
-    int weekDays() const;               // 位掩码：bit 0 = 周一, bit 6 = 周日（Qt::Monday = 1）
+    int weekDays() const;
     bool enabled() const;
 
     void setStartTime(const QTime &time);
@@ -51,7 +50,7 @@ private:
     QTime m_startTime;
     QTime m_endTime;
     RepeatMode m_repeatMode = Daily;
-    int m_weekDays = 0;     // 仅在 WeekDays 模式有效，0 表示未选
+    int m_weekDays = 0;
     bool m_enabled = true;
 };
 

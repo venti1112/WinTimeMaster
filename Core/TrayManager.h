@@ -10,8 +10,7 @@
 
 class LockController;
 
-class TrayManager : public QObject
-{
+class TrayManager : public QObject {
     Q_OBJECT
 
 public:

@@ -6,16 +6,12 @@
 #include <QDateTime>
 #include <QPair>
 #include <QQmlApplicationEngine>
-
-#ifdef Q_OS_WIN
 #include <windows.h>
-#endif
 
 class TimeRuleModel;
 class QQuickWindow;
 
-class LockController : public QObject
-{
+class LockController : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool checking READ isChecking NOTIFY checkingChanged)
 
@@ -55,9 +51,7 @@ private:
     bool m_checking = false;
     bool m_emergencyPasswordActive = false;
     QQmlApplicationEngine *m_engine = nullptr;
-#ifdef Q_OS_WIN
     HHOOK m_keyboardHook = nullptr;
-#endif
 };
 
 #endif // LOCKCONTROLLER_H

@@ -1,4 +1,4 @@
-#ifndef REMOTECONFIGUPDATER_H
+﻿#ifndef REMOTECONFIGUPDATER_H
 #define REMOTECONFIGUPDATER_H
 
 #include <QObject>
@@ -8,8 +8,7 @@
 class QTimer;
 class QNetworkReply;
 
-class RemoteConfigUpdater : public QObject
-{
+class RemoteConfigUpdater : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool enabled READ isEnabled WRITE setEnabled NOTIFY enabledChanged)
     Q_PROPERTY(QString remoteUrl READ remoteUrl WRITE setRemoteUrl NOTIFY remoteUrlChanged)

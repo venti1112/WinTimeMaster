@@ -1,10 +1,9 @@
-#ifndef PASSWORDHASHER_H
+﻿#ifndef PASSWORDHASHER_H
 #define PASSWORDHASHER_H
 
 #include <QString>
 
-class PasswordHasher
-{
+class PasswordHasher {
 public:
     static QString hashPassword(const QString &password);
     static bool verifyPassword(const QString &password, const QString &hash);

@@ -1,4 +1,4 @@
-#include "RemoteConfigUpdater.h"
+﻿#include "RemoteConfigUpdater.h"
 #include "ConfigManager.h"
 #include <QTimer>
 #include <QNetworkReply>
@@ -7,53 +7,43 @@
 #include <QJsonArray>
 #include <QDateTime>
 
-RemoteConfigUpdater::RemoteConfigUpdater(QObject *parent)
-    : QObject(parent)
-{
+RemoteConfigUpdater::RemoteConfigUpdater(QObject *parent) : QObject(parent){
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &RemoteConfigUpdater::syncNow);
-    connect(&m_networkManager, &QNetworkAccessManager::finished,
-            this, &RemoteConfigUpdater::onReplyFinished);
+    connect(&m_networkManager, &QNetworkAccessManager::finished, this, &RemoteConfigUpdater::onReplyFinished);
 }
 
-RemoteConfigUpdater::~RemoteConfigUpdater()
-{
+RemoteConfigUpdater::~RemoteConfigUpdater() {
     m_timer->stop();
 }
 
-bool RemoteConfigUpdater::isEnabled() const
-{
+bool RemoteConfigUpdater::isEnabled() const {
     return m_enabled;
 }
 
-void RemoteConfigUpdater::setEnabled(bool enabled)
-{
+void RemoteConfigUpdater::setEnabled(bool enabled) {
     if (m_enabled == enabled) return;
     m_enabled = enabled;
     emit enabledChanged(enabled);
     rescheduleTimer();
 }
 
-QString RemoteConfigUpdater::remoteUrl() const
-{
+QString RemoteConfigUpdater::remoteUrl() const {
     return m_remoteUrl;
 }
 
-void RemoteConfigUpdater::setRemoteUrl(const QString &url)
-{
+void RemoteConfigUpdater::setRemoteUrl(const QString &url) {
     if (m_remoteUrl == url) return;
     m_remoteUrl = url;
     emit remoteUrlChanged(url);
     ConfigManager::instance()->writeString("RemoteConfigUrl", url);
 }
 
-int RemoteConfigUpdater::intervalMinutes() const
-{
+int RemoteConfigUpdater::intervalMinutes() const {
     return m_intervalMinutes;
 }
 
-void RemoteConfigUpdater::setIntervalMinutes(int minutes)
-{
+void RemoteConfigUpdater::setIntervalMinutes(int minutes) {
     if (m_intervalMinutes == minutes) return;
     m_intervalMinutes = minutes;
     emit intervalMinutesChanged(minutes);
@@ -61,23 +51,19 @@ void RemoteConfigUpdater::setIntervalMinutes(int minutes)
     rescheduleTimer();
 }
 
-QString RemoteConfigUpdater::lastSyncStatus() const
-{
+QString RemoteConfigUpdater::lastSyncStatus() const {
     return m_lastStatus;
 }
 
-QString RemoteConfigUpdater::lastSyncTime() const
-{
+QString RemoteConfigUpdater::lastSyncTime() const {
     return m_lastTime;
 }
 
-bool RemoteConfigUpdater::lastSyncSuccess() const
-{
+bool RemoteConfigUpdater::lastSyncSuccess() const {
     return m_lastSuccess;
 }
 
-void RemoteConfigUpdater::reloadFromConfig()
-{
+void RemoteConfigUpdater::reloadFromConfig() {
     m_enabled = ConfigManager::instance()->readBool("RemoteConfigEnabled", false);
     m_remoteUrl = ConfigManager::instance()->readString("RemoteConfigUrl", QString());
     m_intervalMinutes = ConfigManager::instance()->readInt("RemoteConfigIntervalMinutes", 60);
@@ -87,8 +73,7 @@ void RemoteConfigUpdater::reloadFromConfig()
     rescheduleTimer();
 }
 
-void RemoteConfigUpdater::syncNow()
-{
+void RemoteConfigUpdater::syncNow() {
     if (m_remoteUrl.isEmpty()) {
         recordResult(false, tr("Remote URL is empty"));
         return;
@@ -99,8 +84,7 @@ void RemoteConfigUpdater::syncNow()
     m_networkManager.get(request);
 }
 
-void RemoteConfigUpdater::onReplyFinished(QNetworkReply *reply)
-{
+void RemoteConfigUpdater::onReplyFinished(QNetworkReply *reply) {
     if (reply->error() != QNetworkReply::NoError) {
         recordResult(false, reply->errorString());
         reply->deleteLater();
@@ -129,14 +113,10 @@ void RemoteConfigUpdater::onReplyFinished(QNetworkReply *reply)
         const QString &key = it.key();
         const QJsonValue &value = it.value();
 
-        if (value.isBool())
-            cfg->writeBool(key, value.toBool());
-        else if (value.isDouble())
-            cfg->writeInt(key, value.toInt());
-        else if (value.isString())
-            cfg->writeString(key, value.toString());
-        else if (value.isArray())
-            cfg->writeJsonArray(key, value.toArray());
+        if (value.isBool()) cfg->writeBool(key, value.toBool());
+        else if (value.isDouble()) cfg->writeInt(key, value.toInt());
+        else if (value.isString()) cfg->writeString(key, value.toString());
+        else if (value.isArray()) cfg->writeJsonArray(key, value.toArray());
     }
 
     cfg->saveToFile();
@@ -144,16 +124,12 @@ void RemoteConfigUpdater::onReplyFinished(QNetworkReply *reply)
     emit configUpdated();
 }
 
-void RemoteConfigUpdater::rescheduleTimer()
-{
+void RemoteConfigUpdater::rescheduleTimer() {
     m_timer->stop();
-    if (m_enabled && m_intervalMinutes > 0 && !m_remoteUrl.isEmpty()) {
-        m_timer->start(m_intervalMinutes * 60 * 1000);
-    }
+    if (m_enabled && m_intervalMinutes > 0 && !m_remoteUrl.isEmpty()) m_timer->start(m_intervalMinutes * 60 * 1000);
 }
 
-void RemoteConfigUpdater::recordResult(bool success, const QString &message)
-{
+void RemoteConfigUpdater::recordResult(bool success, const QString &message) {
     m_lastSuccess = success;
     m_lastStatus = message;
     m_lastTime = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");

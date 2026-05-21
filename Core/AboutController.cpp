@@ -1,24 +1,18 @@
-#include "AboutController.h"
+﻿#include "AboutController.h"
 #include <QCoreApplication>
 #include <QtGlobal>
 
-AboutController::AboutController(QObject *parent)
-    : QObject(parent)
-{
-}
+AboutController::AboutController(QObject *parent) : QObject(parent) {}
 
-QString AboutController::appVersion() const
-{
+QString AboutController::appVersion() const {
     return QCoreApplication::applicationVersion();
 }
 
-QString AboutController::qtVersion() const
-{
+QString AboutController::qtVersion() const {
     return QT_VERSION_STR;
 }
 
-QString AboutController::compiler() const
-{
+QString AboutController::compiler() const {
 #if defined(Q_CC_MSVC)
     return QStringLiteral("MSVC %1").arg(_MSC_VER);
 #elif defined(Q_CC_GNU)
@@ -30,8 +24,7 @@ QString AboutController::compiler() const
 #endif
 }
 
-QString AboutController::buildType() const
-{
+QString AboutController::buildType() const {
 #ifdef QT_DEBUG
     return QStringLiteral("Debug");
 #else
@@ -39,8 +32,7 @@ QString AboutController::buildType() const
 #endif
 }
 
-QString AboutController::developers() const
-{
+QString AboutController::developers() const {
     return QStringLiteral("Venti1112");
 }
 

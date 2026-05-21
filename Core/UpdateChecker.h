@@ -1,12 +1,11 @@
-#ifndef UPDATECHECKER_H
+﻿#ifndef UPDATECHECKER_H
 #define UPDATECHECKER_H
 
 #include <QObject>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 
-class UpdateChecker : public QObject
-{
+class UpdateChecker : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool checking READ isChecking NOTIFY checkingChanged)
     Q_PROPERTY(QString latestVersion READ latestVersion NOTIFY latestVersionChanged)

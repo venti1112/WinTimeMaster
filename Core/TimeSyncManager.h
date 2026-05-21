@@ -1,4 +1,4 @@
-#ifndef TIMESYNCMANAGER_H
+﻿#ifndef TIMESYNCMANAGER_H
 #define TIMESYNCMANAGER_H
 
 #include <QObject>
@@ -6,8 +6,7 @@
 
 class QTimer;
 
-class TimeSyncManager : public QObject
-{
+class TimeSyncManager : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool enabled READ isEnabled WRITE setEnabled NOTIFY enabledChanged)
     Q_PROPERTY(QString server READ server WRITE setServer NOTIFY serverChanged)
@@ -33,7 +32,6 @@ public:
     QString lastSyncTime() const;
     bool lastSyncSuccess() const;
 
-    // 在配置导入后调用，从 ConfigManager 重新加载配置并重启定时器
     void reloadFromConfig();
 
 public slots:

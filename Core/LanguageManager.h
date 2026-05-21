@@ -5,8 +5,7 @@
 #include <QTranslator>
 #include <QQmlApplicationEngine>
 
-class LanguageManager : public QObject
-{
+class LanguageManager : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString currentLanguage READ currentLanguage NOTIFY languageChanged)
 
@@ -24,7 +23,7 @@ signals:
 
 private:
     bool loadTranslation(const QString &languageCode);
-    QString resolveLanguageCode(const QString &localeName) const;  // 智能映射
+    QString resolveLanguageCode(const QString &localeName) const;
 
     QQmlApplicationEngine *m_engine = nullptr;
     QTranslator *m_translator = nullptr;

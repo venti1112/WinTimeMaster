@@ -4,8 +4,7 @@
 #include <QObject>
 #include "TimeRuleModel.h"
 
-class SettingsController : public QObject
-{
+class SettingsController : public QObject {
     Q_OBJECT
     Q_PROPERTY(TimeRuleModel* timeRuleModel READ timeRuleModel CONSTANT)
     Q_PROPERTY(bool autostartEnabled READ isAutostartEnabled WRITE setAutostartEnabled NOTIFY autostartEnabledChanged)

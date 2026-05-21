@@ -3,48 +3,41 @@
 #include <QJsonObject>
 #include <QDebug>
 
-TimeRuleModel::TimeRuleModel(QObject *parent)
-    : QAbstractListModel(parent)
-{
+TimeRuleModel::TimeRuleModel(QObject *parent) : QAbstractListModel(parent) {
     loadRules();
 }
 
-int TimeRuleModel::rowCount(const QModelIndex &parent) const
-{
+int TimeRuleModel::rowCount(const QModelIndex &parent) const {
     if (parent.isValid()) return 0;
     return m_rules.size();
 }
 
-QVariant TimeRuleModel::data(const QModelIndex &index, int role) const
-{
-    if (!index.isValid() || index.row() >= m_rules.size())
-        return {};
+QVariant TimeRuleModel::data(const QModelIndex &index, int role) const {
+    if (!index.isValid() || index.row() >= m_rules.size()) return {};
 
     TimeRule *rule = m_rules.at(index.row());
     switch (role) {
-    case IdRole:        return rule->id();
-    case StartTimeRole: return rule->startTime();
-    case EndTimeRole:   return rule->endTime();
-    case RepeatModeRole:return rule->repeatMode();
-    case WeekDaysRole:  return rule->weekDays();
-    case EnabledRole:   return rule->enabled();
-    default:            return {};
+        case IdRole: return rule->id();
+        case StartTimeRole: return rule->startTime();
+        case EndTimeRole: return rule->endTime();
+        case RepeatModeRole: return rule->repeatMode();
+        case WeekDaysRole: return rule->weekDays();
+        case EnabledRole: return rule->enabled();
+        default: return {};
     }
 }
 
-bool TimeRuleModel::setData(const QModelIndex &index, const QVariant &value, int role)
-{
-    if (!index.isValid() || index.row() >= m_rules.size())
-        return false;
+bool TimeRuleModel::setData(const QModelIndex &index, const QVariant &value, int role) {
+    if (!index.isValid() || index.row() >= m_rules.size()) return false;
 
     TimeRule *rule = m_rules.at(index.row());
     switch (role) {
-    case StartTimeRole: rule->setStartTime(value.toTime()); break;
-    case EndTimeRole:   rule->setEndTime(value.toTime()); break;
-    case RepeatModeRole:rule->setRepeatMode(static_cast<TimeRule::RepeatMode>(value.toInt())); break;
-    case WeekDaysRole:  rule->setWeekDays(value.toInt()); break;
-    case EnabledRole:   rule->setEnabled(value.toBool()); break;
-    default: return false;
+        case StartTimeRole: rule->setStartTime(value.toTime()); break;
+        case EndTimeRole: rule->setEndTime(value.toTime()); break;
+        case RepeatModeRole: rule->setRepeatMode(static_cast<TimeRule::RepeatMode>(value.toInt())); break;
+        case WeekDaysRole: rule->setWeekDays(value.toInt()); break;
+        case EnabledRole: rule->setEnabled(value.toBool()); break;
+        default: return false;
     }
 
     emit dataChanged(index, index, {role});
@@ -52,8 +45,7 @@ bool TimeRuleModel::setData(const QModelIndex &index, const QVariant &value, int
     return true;
 }
 
-QHash<int, QByteArray> TimeRuleModel::roleNames() const
-{
+QHash<int, QByteArray> TimeRuleModel::roleNames() const {
     return {
         {IdRole, "ruleId"},
         {StartTimeRole, "startTime"},
@@ -64,15 +56,13 @@ QHash<int, QByteArray> TimeRuleModel::roleNames() const
     };
 }
 
-void TimeRuleModel::addRule()
-{
+void TimeRuleModel::addRule() {
     auto *rule = new TimeRule(nextRuleId(), this);
 
     beginInsertRows(QModelIndex(), m_rules.size(), m_rules.size());
     m_rules.append(rule);
     endInsertRows();
 
-    // 连接规则内部属性变化到模型信号，以便视图自动刷新
     connect(rule, &TimeRule::startTimeChanged, this, [this, rule]() {
         int row = m_rules.indexOf(rule);
         if (row >= 0) emit dataChanged(index(row), index(row), {StartTimeRole});
@@ -97,8 +87,7 @@ void TimeRuleModel::addRule()
     saveRules();
 }
 
-void TimeRuleModel::updateRule(int row, const QVariantMap &data)
-{
+void TimeRuleModel::updateRule(int row, const QVariantMap &data) {
     TimeRule *rule = ruleAt(row);
     if (!rule) return;
 
@@ -112,8 +101,7 @@ void TimeRuleModel::updateRule(int row, const QVariantMap &data)
     saveRules();
 }
 
-void TimeRuleModel::removeRule(int row)
-{
+void TimeRuleModel::removeRule(int row) {
     if (row < 0 || row >= m_rules.size()) return;
 
     beginRemoveRows(QModelIndex(), row, row);
@@ -124,20 +112,16 @@ void TimeRuleModel::removeRule(int row)
     saveRules();
 }
 
-TimeRule *TimeRuleModel::ruleAt(int row) const
-{
+TimeRule *TimeRuleModel::ruleAt(int row) const {
     if (row < 0 || row >= m_rules.size()) return nullptr;
     return m_rules.at(row);
 }
 
-QList<TimeRule*> TimeRuleModel::rules() const
-{
+QList<TimeRule*> TimeRuleModel::rules() const {
     return m_rules;
 }
 
-// ------------------ 持久化 ------------------
-void TimeRuleModel::loadRules()
-{
+void TimeRuleModel::loadRules() {
     const QJsonArray arr = ConfigManager::instance()->readJsonArray("TimeRules");
     if (arr.isEmpty()) return;
 
@@ -166,8 +150,7 @@ void TimeRuleModel::loadRules()
     qDebug() << "Loaded" << m_rules.size() << "time rules.";
 }
 
-void TimeRuleModel::saveRules()
-{
+void TimeRuleModel::saveRules() {
     QJsonArray arr;
     for (const TimeRule *rule : m_rules) {
         QJsonObject obj;
@@ -184,15 +167,13 @@ void TimeRuleModel::saveRules()
     qDebug() << "Saved" << arr.size() << "time rules.";
 }
 
-int TimeRuleModel::nextRuleId()
-{
+int TimeRuleModel::nextRuleId() {
     return m_nextId++;
 }
-void TimeRuleModel::reload()
-{
+void TimeRuleModel::reload() {
     beginResetModel();
     qDeleteAll(m_rules);
     m_rules.clear();
     endResetModel();
-    loadRules();   // 从 ConfigManager 重新加载规则
+    loadRules();
 }

@@ -5,8 +5,7 @@
 #include <QJsonArray>
 #include "TimeRule.h"
 
-class TimeRuleModel : public QAbstractListModel
-{
+class TimeRuleModel : public QAbstractListModel {
     Q_OBJECT
 
 public:
@@ -23,19 +22,16 @@ public:
     explicit TimeRuleModel(QObject *parent = nullptr);
     ~TimeRuleModel() override = default;
 
-    // QAbstractListModel 接口
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role) override;
     QHash<int, QByteArray> roleNames() const override;
 
-    // QML 可调用的方法
     Q_INVOKABLE void addRule();
     Q_INVOKABLE void updateRule(int row, const QVariantMap &data);
     Q_INVOKABLE void removeRule(int row);
     Q_INVOKABLE void reload();
 
-    // 辅助方法
     TimeRule *ruleAt(int row) const;
     QList<TimeRule*> rules() const;
 

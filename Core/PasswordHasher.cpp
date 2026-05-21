@@ -1,4 +1,4 @@
-#include "PasswordHasher.h"
+﻿#include "PasswordHasher.h"
 #include <windows.h>
 #include <ntstatus.h>
 #include <bcrypt.h>
@@ -8,8 +8,7 @@
 
 #pragma comment(lib, "bcrypt.lib")
 
-static QByteArray generateSalt(int length = 16)
-{
+static QByteArray generateSalt(int length = 16) {
     BCRYPT_ALG_HANDLE hAlg = nullptr;
     QByteArray salt(length, 0);
 
@@ -20,15 +19,13 @@ static QByteArray generateSalt(int length = 16)
     return salt;
 }
 
-static QByteArray hashWithBCrypt(const QByteArray &password, const QByteArray &salt, int rounds = 10000)
-{
+static QByteArray hashWithBCrypt(const QByteArray &password, const QByteArray &salt, int rounds = 10000) {
     BCRYPT_ALG_HANDLE hAlg = nullptr;
     BCRYPT_HASH_HANDLE hHash = nullptr;
     QByteArray hash(32, 0);
     DWORD cbHash = 0;
 
-    if (BCryptOpenAlgorithmProvider(&hAlg, BCRYPT_SHA256_ALGORITHM, nullptr, 0) != STATUS_SUCCESS)
-        return {};
+    if (BCryptOpenAlgorithmProvider(&hAlg, BCRYPT_SHA256_ALGORITHM, nullptr, 0) != STATUS_SUCCESS) return {};
 
     DWORD cbObject = 0, cbData = 0;
     BCryptGetProperty(hAlg, BCRYPT_OBJECT_LENGTH, reinterpret_cast<PUCHAR>(&cbObject), sizeof(DWORD), &cbData, 0);
@@ -56,15 +53,12 @@ static QByteArray hashWithBCrypt(const QByteArray &password, const QByteArray &s
     return hash;
 }
 
-QString PasswordHasher::hashPassword(const QString &password)
-{
-    if (password.isEmpty())
-        return QString();
+QString PasswordHasher::hashPassword(const QString &password) {
+    if (password.isEmpty()) return QString();
 
     QByteArray salt = generateSalt(16);
     QByteArray hash = hashWithBCrypt(password.toUtf8(), salt);
-    if (hash.isEmpty())
-        return QString();
+    if (hash.isEmpty()) return QString();
 
     QByteArray result;
     result.append("$pbkdf2$");
@@ -74,16 +68,12 @@ QString PasswordHasher::hashPassword(const QString &password)
     return QString::fromLatin1(result);
 }
 
-bool PasswordHasher::verifyPassword(const QString &password, const QString &storedHash)
-{
-    if (storedHash.isEmpty())
-        return password.isEmpty();
-    if (password.isEmpty())
-        return false;
+bool PasswordHasher::verifyPassword(const QString &password, const QString &storedHash) {
+    if (storedHash.isEmpty()) return password.isEmpty();
+    if (password.isEmpty()) return false;
 
     QStringList parts = storedHash.split('$');
-    if (parts.size() < 4)
-        return false;
+    if (parts.size() < 4) return false;
 
     QByteArray salt = QByteArray::fromBase64(parts[2].toLatin1());
     QByteArray expectedHash = QByteArray::fromBase64(parts[3].toLatin1());

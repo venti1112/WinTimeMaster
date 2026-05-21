@@ -1,4 +1,4 @@
-#include "TimeSyncManager.h"
+﻿#include "TimeSyncManager.h"
 #include "ConfigManager.h"
 
 #include <QTimer>
@@ -8,23 +8,16 @@
 #include <QDateTime>
 #include <QEventLoop>
 #include <QDebug>
-
-#ifdef Q_OS_WIN
 #include <windows.h>
-#endif
 
 namespace {
 constexpr int kDefaultIntervalMinutes = 60;
 constexpr int kMinIntervalMinutes = 1;
 const char *kDefaultServer = "time.windows.com";
-
-// SNTP/NTP 时间偏移量：从 1900-01-01 到 1970-01-01 的秒数
 constexpr quint64 kNtpUnixOffsetSeconds = 2208988800ULL;
 }
 
-TimeSyncManager::TimeSyncManager(QObject *parent)
-    : QObject(parent)
-{
+TimeSyncManager::TimeSyncManager(QObject *parent) : QObject(parent) {
     m_timer = new QTimer(this);
     m_timer->setSingleShot(false);
     connect(m_timer, &QTimer::timeout, this, [this]() { syncNow(); });
@@ -34,18 +27,15 @@ TimeSyncManager::TimeSyncManager(QObject *parent)
 
 TimeSyncManager::~TimeSyncManager() = default;
 
-void TimeSyncManager::reloadFromConfig()
-{
+void TimeSyncManager::reloadFromConfig() {
     ConfigManager *cfg = ConfigManager::instance();
     if (!cfg) return;
 
     m_enabled = cfg->readBool("AutoTimeSync", false);
     m_server = cfg->readString("TimeSyncServer", QString::fromLatin1(kDefaultServer));
-    if (m_server.trimmed().isEmpty())
-        m_server = QString::fromLatin1(kDefaultServer);
+    if (m_server.trimmed().isEmpty())  m_server = QString::fromLatin1(kDefaultServer);
     m_intervalMinutes = cfg->readInt("TimeSyncIntervalMinutes", kDefaultIntervalMinutes);
-    if (m_intervalMinutes < kMinIntervalMinutes)
-        m_intervalMinutes = kMinIntervalMinutes;
+    if (m_intervalMinutes < kMinIntervalMinutes)  m_intervalMinutes = kMinIntervalMinutes;
 
     emit enabledChanged(m_enabled);
     emit serverChanged(m_server);
@@ -53,15 +43,14 @@ void TimeSyncManager::reloadFromConfig()
 
     rescheduleTimer();
 
-    // 启用时立即触发一次同步
-    if (m_enabled)
-        QTimer::singleShot(0, this, [this]() { syncNow(); });
+    if (m_enabled) QTimer::singleShot(0, this, [this]() { syncNow(); });
 }
 
-bool TimeSyncManager::isEnabled() const { return m_enabled; }
+bool TimeSyncManager::isEnabled() const {
+    return m_enabled;
+}
 
-void TimeSyncManager::setEnabled(bool enabled)
-{
+void TimeSyncManager::setEnabled(bool enabled) {
     if (m_enabled == enabled) return;
     m_enabled = enabled;
     if (ConfigManager::instance())
@@ -88,8 +77,7 @@ void TimeSyncManager::setServer(const QString &server)
 
 int TimeSyncManager::intervalMinutes() const { return m_intervalMinutes; }
 
-void TimeSyncManager::setIntervalMinutes(int minutes)
-{
+void TimeSyncManager::setIntervalMinutes(int minutes) {
     if (minutes < kMinIntervalMinutes)
         minutes = kMinIntervalMinutes;
     if (m_intervalMinutes == minutes) return;
@@ -104,42 +92,36 @@ QString TimeSyncManager::lastSyncStatus() const { return m_lastStatus; }
 QString TimeSyncManager::lastSyncTime() const { return m_lastTime; }
 bool TimeSyncManager::lastSyncSuccess() const { return m_lastSuccess; }
 
-void TimeSyncManager::rescheduleTimer()
-{
+void TimeSyncManager::rescheduleTimer() {
     if (!m_timer) return;
     if (!m_enabled) {
         m_timer->stop();
         return;
     }
     int intervalMs = m_intervalMinutes * 60 * 1000;
-    if (intervalMs <= 0)
-        intervalMs = kDefaultIntervalMinutes * 60 * 1000;
+    if (intervalMs <= 0) intervalMs = kDefaultIntervalMinutes * 60 * 1000;
     m_timer->start(intervalMs);
 }
 
-void TimeSyncManager::recordResult(bool success, const QString &message)
-{
+void TimeSyncManager::recordResult(bool success, const QString &message) {
     m_lastSuccess = success;
     m_lastStatus = message;
     m_lastTime = QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss");
     emit lastSyncResult();
 }
 
-bool TimeSyncManager::syncNow()
-{
+bool TimeSyncManager::syncNow() {
     QString errorMsg;
     bool ok = fetchAndApplyNtp(m_server, &errorMsg);
-    if (ok) {
-        recordResult(true, tr("Time synchronized successfully"));
-    } else {
+    if (ok) recordResult(true, tr("Time synchronized successfully"));
+    else {
         qWarning() << "Time sync failed:" << errorMsg;
         recordResult(false, errorMsg);
     }
     return ok;
 }
 
-bool TimeSyncManager::fetchAndApplyNtp(const QString &server, QString *errorOut)
-{
+bool TimeSyncManager::fetchAndApplyNtp(const QString &server, QString *errorOut) {
     auto setError = [&](const QString &msg) {
         if (errorOut) *errorOut = msg;
     };
@@ -149,7 +131,6 @@ bool TimeSyncManager::fetchAndApplyNtp(const QString &server, QString *errorOut)
         return false;
     }
 
-    // 解析主机名（支持 IP 或域名）
     QHostInfo hostInfo = QHostInfo::fromName(server);
     if (hostInfo.error() != QHostInfo::NoError || hostInfo.addresses().isEmpty()) {
         setError(tr("Failed to resolve server: %1").arg(hostInfo.errorString()));
@@ -162,11 +143,9 @@ bool TimeSyncManager::fetchAndApplyNtp(const QString &server, QString *errorOut)
             break;
         }
     }
-    if (address.isNull())
-        address = hostInfo.addresses().first();
+    if (address.isNull()) address = hostInfo.addresses().first();
 
     QUdpSocket socket;
-    // 构造 NTPv3 客户端请求包：48 字节，第一个字节 = (LI<<6)|(VN<<3)|Mode = 0x1B
     QByteArray request(48, 0);
     request[0] = 0x1B;
 
@@ -188,12 +167,8 @@ bool TimeSyncManager::fetchAndApplyNtp(const QString &server, QString *errorOut)
         return false;
     }
 
-    // 解析 Transmit Timestamp（偏移 40，前 4 字节为整数秒，后 4 字节为分数秒，皆为大端）
     auto readUint32BE = [](const QByteArray &buf, int offset) -> quint32 {
-        return (static_cast<quint32>(static_cast<quint8>(buf[offset])) << 24)
-             | (static_cast<quint32>(static_cast<quint8>(buf[offset + 1])) << 16)
-             | (static_cast<quint32>(static_cast<quint8>(buf[offset + 2])) << 8)
-             | (static_cast<quint32>(static_cast<quint8>(buf[offset + 3])));
+        return (static_cast<quint32>(static_cast<quint8>(buf[offset])) << 24) | (static_cast<quint32>(static_cast<quint8>(buf[offset + 1])) << 16) | (static_cast<quint32>(static_cast<quint8>(buf[offset + 2])) << 8) | (static_cast<quint32>(static_cast<quint8>(buf[offset + 3])));
     };
 
     quint32 secsSince1900 = readUint32BE(response, 40);
@@ -205,7 +180,6 @@ bool TimeSyncManager::fetchAndApplyNtp(const QString &server, QString *errorOut)
     }
 
     qint64 unixSecs = static_cast<qint64>(secsSince1900) - static_cast<qint64>(kNtpUnixOffsetSeconds);
-    // 分数秒 -> 毫秒
     int milliseconds = static_cast<int>((static_cast<quint64>(fracSeconds) * 1000ULL) >> 32);
 
     QDateTime utcNow = QDateTime::fromMSecsSinceEpoch(unixSecs * 1000LL + milliseconds, Qt::UTC);
@@ -214,7 +188,6 @@ bool TimeSyncManager::fetchAndApplyNtp(const QString &server, QString *errorOut)
         return false;
     }
 
-#ifdef Q_OS_WIN
     SYSTEMTIME st;
     QDate date = utcNow.date();
     QTime time = utcNow.time();
@@ -234,8 +207,4 @@ bool TimeSyncManager::fetchAndApplyNtp(const QString &server, QString *errorOut)
         return false;
     }
     return true;
-#else
-    setError(tr("Time sync not implemented on this platform"));
-    return false;
-#endif
 }

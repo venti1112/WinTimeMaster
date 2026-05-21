@@ -1,10 +1,9 @@
-#ifndef ABOUTCONTROLLER_H
+﻿#ifndef ABOUTCONTROLLER_H
 #define ABOUTCONTROLLER_H
 
 #include <QObject>
 
-class AboutController : public QObject
-{
+class AboutController : public QObject {
     Q_OBJECT
 
     Q_PROPERTY(QString appVersion READ appVersion CONSTANT)

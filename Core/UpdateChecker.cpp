@@ -8,35 +8,27 @@
 
 static const QString kGitHubApiUrl = "https://api.github.com/repos/venti1112/WinTimeMaster/releases/latest";
 
-UpdateChecker::UpdateChecker(QObject *parent)
-    : QObject(parent)
-{
-    connect(&m_networkManager, &QNetworkAccessManager::finished,
-            this, &UpdateChecker::onReplyFinished);
+UpdateChecker::UpdateChecker(QObject *parent) : QObject(parent) {
+    connect(&m_networkManager, &QNetworkAccessManager::finished, this, &UpdateChecker::onReplyFinished);
 }
 
-bool UpdateChecker::isChecking() const
-{
+bool UpdateChecker::isChecking() const {
     return m_checking;
 }
 
-QString UpdateChecker::latestVersion() const
-{
+QString UpdateChecker::latestVersion() const {
     return m_latestVersion;
 }
 
-QString UpdateChecker::downloadUrl() const
-{
+QString UpdateChecker::downloadUrl() const {
     return m_downloadUrl;
 }
 
-QString UpdateChecker::updateMessage() const
-{
+QString UpdateChecker::updateMessage() const {
     return m_updateMessage;
 }
 
-void UpdateChecker::checkForUpdates()
-{
+void UpdateChecker::checkForUpdates() {
     if (m_checking) return;
 
     m_checking = true;
@@ -49,14 +41,11 @@ void UpdateChecker::checkForUpdates()
     m_networkManager.get(request);
 }
 
-void UpdateChecker::openDownloadUrl()
-{
-    if (!m_downloadUrl.isEmpty())
-        QDesktopServices::openUrl(QUrl(m_downloadUrl));
+void UpdateChecker::openDownloadUrl() {
+    if (!m_downloadUrl.isEmpty()) QDesktopServices::openUrl(QUrl(m_downloadUrl));
 }
 
-void UpdateChecker::onReplyFinished(QNetworkReply *reply)
-{
+void UpdateChecker::onReplyFinished(QNetworkReply *reply) {
     m_checking = false;
     emit checkingChanged(false);
 
@@ -96,9 +85,6 @@ void UpdateChecker::onReplyFinished(QNetworkReply *reply)
     emit updateMessageChanged(m_updateMessage);
 
     QString currentVersion = QCoreApplication::applicationVersion();
-    if (tagName != currentVersion) {
-        emit updateAvailable(tagName, htmlUrl, body);
-    } else {
-        emit noUpdateAvailable();
-    }
+    if (tagName != currentVersion) emit updateAvailable(tagName, htmlUrl, body);
+    else emit noUpdateAvailable();
 }

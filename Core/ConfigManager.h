@@ -5,8 +5,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 
-class ConfigManager : public QObject
-{
+class ConfigManager : public QObject {
     Q_OBJECT
 public:
     static ConfigManager* instance();
